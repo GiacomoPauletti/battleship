@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "map.h"
 
+int MAP_WIDTH = DEFAULT_MAP_WIDTH;
+int MAP_HEIGHT = DEFAULT_MAP_HEIGHT;
+
 void empty(Map map)
 {
     int cursorX, cursorY;
@@ -18,6 +21,16 @@ void empty(Map map)
 void addToMap(Map map, Coordinate coord, char symbol)
 {
     map[coord.y][coord.x] = symbol;
+}
+
+void mAddToMap(Map map, Coordinate *coord, int length, char symbol)
+{
+    int cursor;
+
+    for ( cursor = 0; cursor < length; cursor++ )
+    {
+        map[coord[cursor].y][coord[cursor].x] = symbol;
+    }
 }
 
 char getFromMap(Map map, Coordinate coord)
