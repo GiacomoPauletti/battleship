@@ -42,7 +42,7 @@ o888bood8P'  `Y888\"\"8o   \"888\"   \"888\" o888o `Y8bod8P' 8\"\"888P' o888o o8
 
     printf("\n\n\n\n");
 
-    
+     
     /* -------------------------------------- INPUT NOME UTENTI ------------------------------------ */
     printf("Bene giocatori, è tempo di inserire i vostri nomi\n");
     printf("Giocatore1 -> ");

@@ -1,6 +1,39 @@
 #include "ship.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 int SHIP_NUMBER = DEFAULT_SHIP_NUM;
+
+
+void initDefaultArmy(Ship *defaultArmy)
+{
+    int lengthCursorA, shipCursorB, pointCursor;
+    int shipLength;
+    int shipCounter;
+
+    shipCounter = 0;
+
+    for ( lengthCursorA = 1; lengthCursorA <= 4; lengthCursorA++ )
+    {
+
+        for ( shipCursorB = 0; shipCursorB <= 4 - lengthCursorA; shipCursorB++)
+        {
+            defaultArmy[shipCounter].length = lengthCursorA;
+            
+            for ( pointCursor = 0; pointCursor < lengthCursorA; pointCursor++)
+            {
+                defaultArmy[shipCounter].points[pointCursor].x = MAP_WIDTH / 2 - 1;
+                defaultArmy[shipCounter].points[pointCursor].y = 2 + pointCursor;
+            }
+
+            shipCounter++;
+
+        }
+
+    }
+}
+
+
 
 void findShip(Map map, Coordinate point, Ship *ship)
 {
@@ -146,3 +179,4 @@ int placeShip(Map map, Ship ship)
 
     return validPosition;
 }
+

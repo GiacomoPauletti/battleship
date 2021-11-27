@@ -1,5 +1,6 @@
 #include "../map/map.h"
 
+#define MAX_SHIP_NUM 20
 #define DEFAULT_SHIP_NUM 10
 #define MAX_SHIP_POINTS 6
 
@@ -9,6 +10,7 @@
 
 extern int SHIP_NUMBER;
 
+
 typedef struct 
 {
     Coordinate points[MAX_SHIP_POINTS];
@@ -16,6 +18,12 @@ typedef struct
     int hitCounter;
     
 } Ship;
+
+
+void initDefaultArmy(Ship *defaultArmy);
+/* initDefaultArmy
+ * This function initializes the default ship army used during the game
+ */
 
 int isLegal(Ship ship);
 /* isLegal
