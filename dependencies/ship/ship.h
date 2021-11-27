@@ -15,7 +15,7 @@ typedef struct
 } Ship;
 
 int isLegal(Ship ship);
-/* legalize
+/* isLegal
  * This function checks whether the given ship is legal.
  * A ship is considered legal if all points are adiacent to at least another point 
  * and all points are part of an unique ship (ship made of multiple parts are not admitted)
@@ -35,15 +35,20 @@ int isLegal(Ship ship);
  *      O           O  O
  * 
  * These are the corrected versions of ships of the previous example.
+ * (Note that even though it does not seem so, they are also vertically adiacent)
  */
 
 int isPlaceable(Map map, Ship ship);
 /* isPlaceable
  * this function checks whether a ship is placeable in the passed map
- * If it is placeable, 1 will be retuned.
- * If it is not placeable there are two possible output
+ * If it is placeable, 1 will be returned.
+ * If it is not placeable, 0 will be returned.
  */
 
 int placeShip(Map map, Ship ship);
+/* isPlaceable
+ * First checks whether a ship is placeable by calling isPlaceable.
+ * If the ship is placeable, it places it.
+ */
 
 #endif

@@ -123,23 +123,25 @@ int isPlaceable(Map map, Ship ship)
     return isPlaceable;
 }
 
-/*
 int placeShip(Map map, Ship ship)
 {
     int cursor;
     int validPosition;
-    int shipX, shipY;
-     
-    if ( isPlaceable(map, ship) == 1)
+    Coordinate point;
+    
+    /* if the ship is placeable, it is then placed */
+    validPosition = isPlaceable(map, ship);
+    if ( validPosition == 1)
     {
         for ( cursor = 0; cursor < ship.length; cursor++ )
         {
-            shipX = ship.points[cursor].x;
-            shipY = ship.points[cursor].y;
+            point.x = ship.points[cursor].x;
+            point.y = ship.points[cursor].y;
 
-            if (map[shipY][shipX] != EMPTY_CHAR)
+            addToMap(map, point, SAFE_SHIP_CHAR);
+
         }
     }
 
-
-}*/
+    return validPosition;
+}
