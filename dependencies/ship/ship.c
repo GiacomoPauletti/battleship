@@ -1,15 +1,7 @@
 #include "ship.h"
 
-int isLegal(Ship ship)
-{
-    Ship checkedShip;
-    checkedShip.points[0] = ship.points[0];
-    checkedShip.length = 1;
-    
-    return 1;
-}
 
-Ship findShip(Map map, Coordinate point, Ship ship)
+void findShip(Map map, Coordinate point, Ship *ship)
 {
     int pointCursor, deltasCursor;
 
@@ -30,26 +22,26 @@ Ship findShip(Map map, Coordinate point, Ship ship)
         newPoint.x = point.x + deltas[deltasCursor].x;  
         newPoint.y = point.y + deltas[deltasCursor].y;  
 
-        if ( ( newPoint.x > 0 && newPoint.x < MAP_WIDTH ) && ( newPoint.y >= 0 && newPoint.y < MAP_HEIGHT ) )
+        if ( ( newPoint.x >= 0 && newPoint.x < MAP_WIDTH ) && ( newPoint.y >= 0 && newPoint.y < MAP_HEIGHT ) )
         /* not accepting points that are not in the map range */
         {
 
             if ( getFromMap(map, newPoint) == SAFE_SHIP_CHAR )
             {
                 isNewPoint = 1;
-                for (pointCursor = 0; pointCursor < ship.length && isNewPoint == 1; pointCursor++)
+                for (pointCursor = 0; pointCursor < ship -> length && isNewPoint == 1; pointCursor++)
                 {
-                    if ( ( ship.points[pointCursor].x == newPoint.x ) &&
-                        ( ship.points[pointCursor].y == newPoint.y ) )
+                    if ( ( ship -> points[pointCursor].x == newPoint.x ) &&
+                        ( ship -> points[pointCursor].y == newPoint.y ) )
                         isNewPoint = 0;
                 }
 
                 if ( isNewPoint == 1 )
                 {
-                    ship.points[ship.length] = newPoint;
-                    ship.length++;
+                    ship -> points[ship -> length] = newPoint;
+                    ship -> length++;
 
-                    ship = findShip(map, newPoint, ship);
+                    findShip(map, newPoint, ship);
                 }
             }
 
@@ -57,8 +49,57 @@ Ship findShip(Map map, Coordinate point, Ship ship)
 
     }
 
-    return ship;
+}
 
+int isLegal(Ship ship)
+{
+    Map map;
+    Ship checkedShip;
+
+    if ( ship.length == 0 ) return 0;
+    /* empty ships are not allowed */
+
+    checkedShip.points[0] = ship.points[0];
+    checkedShip.length = 1;
+
+    mAddToMap(map, ship.points, ship.length, SAFE_SHIP_CHAR);
+    /* creating and adding to map the ship, so that findShip finds
+     * all consecutive points of the drawn ship
+     */
+
+    findShip(map, ship.points[0], &checkedShip);
+
+    if ( checkedShip.length != ship.length ) return 0;
+
+    int cursorShip, cursorCheckShip;
+    int isLegal_, found;
+
+    isLegal_ = 1;
+
+    /* the following code checks if every point of the checked ship is a point of the original
+     * ship.
+     * It has already been checked the fact that two ships have same length so it must 
+     * happen either all points matches or at least one point is not present.
+     * 
+     * If one point is not found then the ship must not be legal. 
+     * 
+     * Points cannot be redundant because findShip checks whether one point has already been 
+     * found before adding it to the ship.
+     */
+    for ( cursorCheckShip = 0; cursorCheckShip < ship.length && isLegal_ == 1; cursorCheckShip++ )
+    {
+        found = 0;
+        for ( cursorShip = 0; cursorShip < ship.length && found == 0; cursorShip++ )
+        {
+            if ( ( checkedShip.points[cursorCheckShip].x == ship.points[cursorShip].x ) && 
+                 ( checkedShip.points[cursorCheckShip].y == ship.points[cursorShip].y ))
+                 found = 1;
+        }
+        if (found == 0) isLegal_ = 0;
+    }
+
+    
+    return isLegal_;
 }
 
 int isPlaceable(Map map, Ship ship)

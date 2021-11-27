@@ -4,6 +4,9 @@
 #define MAX_SHIP_POINTS 6
 
 
+#if !defined(SHIP_H)
+#define SHIP_H
+
 typedef struct 
 {
     Coordinate points[MAX_SHIP_POINTS];
@@ -42,3 +45,5 @@ int isPlaceable(Map map, Ship ship);
  */
 
 int placeShip(Map map, Ship ship);
+
+#endif
