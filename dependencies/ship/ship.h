@@ -7,10 +7,13 @@
 #if !defined(SHIP_H)
 #define SHIP_H
 
+extern int SHIP_NUMBER;
+
 typedef struct 
 {
     Coordinate points[MAX_SHIP_POINTS];
     int length; 
+    int hitCounter;
     
 } Ship;
 

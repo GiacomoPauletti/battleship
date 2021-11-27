@@ -1,5 +1,6 @@
 #include "ship.h"
 
+int SHIP_NUMBER = DEFAULT_SHIP_NUM;
 
 void findShip(Map map, Coordinate point, Ship *ship)
 {
