@@ -34,7 +34,7 @@ Ship findShip(Map map, Coordinate point, Ship ship)
         /* not accepting points that are not in the map range */
         {
 
-            if ( map[newPoint.y][newPoint.x] == SAFE_SHIP_CHAR )
+            if ( getFromMap(map, newPoint) == SAFE_SHIP_CHAR )
             {
                 isNewPoint = 1;
                 for (pointCursor = 0; pointCursor < ship.length && isNewPoint == 1; pointCursor++)
@@ -49,7 +49,7 @@ Ship findShip(Map map, Coordinate point, Ship ship)
                     ship.points[ship.length] = newPoint;
                     ship.length++;
 
-                    findShip(map, newPoint, ship);
+                    ship = findShip(map, newPoint, ship);
                 }
             }
 
@@ -73,7 +73,7 @@ int isPlaceable(Map map, Ship ship)
              ( ship.points[cursor].x < 0 || ship.points[cursor].x >= MAP_WIDTH ) )
              /* if the point is out of the map range, 0 will be returned */
             isPlaceable = 0;
-        else if ( map[ship.points[cursor].y][ship.points[cursor].x] != EMPTY_CHAR )
+        else if ( getFromMap(map, ship.points[cursor]) != EMPTY_CHAR )
             /* if the point is overlapping with an already filled point, 0 will be returned */
             isPlaceable = 0;
 
@@ -102,4 +102,3 @@ int placeShip(Map map, Ship ship)
 
 
 }*/
-

@@ -24,7 +24,9 @@ int MAP_HEIGHT = DEFAULT_MAP_HEIGHT;
 
 void empty(Map map);
 
-void add(Map map, Coordinate coord, char symbol);
+char getFromMap(Map map, Coordinate coord);
+
+void addToMap(Map map, Coordinate coord, char symbol);
 
 void printMap(Map map);
 #endif
