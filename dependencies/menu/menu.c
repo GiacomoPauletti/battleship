@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include "menu.h"
 
+#if !defined(__linux__)
+#include <cursio.h>
+#endif
+
+
 typedef struct {} GameSettings;
 
 void mainMenu(MenuData data)
@@ -19,7 +24,8 @@ GameSettings loadGameSettings()
 void playLocal(MenuData data)
 {
     Player player1, player2;
-    Ship defaultArmy[DEFAULT_SHIP_NUM];
+
+    Army defaultArmy;
     GameSettings curSettings;
 
     /* ------------------------------ PLAYERS' NAMES INPUT ---------------------------- */
@@ -36,13 +42,19 @@ void playLocal(MenuData data)
     empty(player1.attackMap);
     empty(player1.defenceMap);
 
+
     empty(player2.attackMap);
     empty(player2.defenceMap);
+
+    /* setting map dimensions */
+    player2.attackMap.dims.x = player2.defenceMap.dims.x = player1.attackMap.dims.x = player1.defenceMap.dims.x = MAP_WIDTH;
+    player2.attackMap.dims.y = player2.defenceMap.dims.y = player1.attackMap.dims.y = player1.defenceMap.dims.y = MAP_WIDTH;
+    
 
     player1.shipNumber = player2.shipNumber = DEFAULT_SHIP_NUM;
 
 
-    initDefaultArmy(defaultArmy);
+    initDefaultArmy(&defaultArmy);
     printf("%s, it's time to place your ships!\n", player1.name);
 
     /* con i numeri da 1 a 10 seleziona la nave da piazzare
@@ -55,4 +67,10 @@ void playLocal(MenuData data)
      *      -> quando con un numero si seleziona una nave già messa poi con - si può rimuovere
      *         la nave già posizionata
      */
+    
+    playerArmySetup(&player1, defaultArmy);
+    //playerArmySetup(&player2, defaultArmy);
+        
+    
 }
+
