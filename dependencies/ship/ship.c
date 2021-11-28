@@ -5,7 +5,7 @@
 int SHIP_NUMBER = DEFAULT_SHIP_NUM;
 
 
-void initDefaultArmy(Army *defaultArmy)
+int initDefaultArmy(Army *defaultArmy)
 {
     int lengthCursorA, shipCursorB, pointCursor;
     int shipLength;
@@ -35,7 +35,7 @@ void initDefaultArmy(Army *defaultArmy)
 
 
 
-void findShip(Map map, Coordinate point, Ship *ship)
+void findShip(MapWrap map, Coordinate point, Ship *ship)
 {
     int pointCursor, deltasCursor;
 
@@ -56,7 +56,7 @@ void findShip(Map map, Coordinate point, Ship *ship)
         newPoint.x = point.x + deltas[deltasCursor].x;  
         newPoint.y = point.y + deltas[deltasCursor].y;  
 
-        if ( ( newPoint.x >= 0 && newPoint.x < MAP_WIDTH ) && ( newPoint.y >= 0 && newPoint.y < MAP_HEIGHT ) )
+        if ( ( newPoint.x >= 0 && newPoint.x < map.dims.x ) && ( newPoint.y >= 0 && newPoint.y < map.dims.y ) )
         /* not accepting points that are not in the map range */
         {
 
@@ -87,7 +87,7 @@ void findShip(Map map, Coordinate point, Ship *ship)
 
 int isLegal(Ship ship)
 {
-    Map map;
+    MapWrap map;
     Ship checkedShip;
 
     if ( ship.length == 0 ) return 0;
@@ -136,7 +136,7 @@ int isLegal(Ship ship)
     return isLegal_;
 }
 
-int isPlaceable(Map map, Ship ship)
+int isPlaceable(MapWrap map, Ship ship)
 {
     int cursor;
     int isPlaceable;
@@ -144,8 +144,8 @@ int isPlaceable(Map map, Ship ship)
     isPlaceable = 1;
     for ( cursor = 0; cursor < ship.length && isPlaceable == 1; cursor++ )
     {
-        if ( ( ship.points[cursor].y < 0 || ship.points[cursor].y >= MAP_HEIGHT ) ||
-             ( ship.points[cursor].x < 0 || ship.points[cursor].x >= MAP_WIDTH ) )
+        if ( ( ship.points[cursor].y < 0 || ship.points[cursor].y >= map.dims.y ) ||
+             ( ship.points[cursor].x < 0 || ship.points[cursor].x >= map.dims.x ) )
              /* if the point is out of the map range, 0 will be returned */
             isPlaceable = 0;
         else if ( getFromMap(map, ship.points[cursor]) != EMPTY_CHAR )
@@ -157,7 +157,7 @@ int isPlaceable(Map map, Ship ship)
     return isPlaceable;
 }
 
-int placeShip(Map map, Ship ship)
+int placeShip(MapWrap map, Ship ship)
 {
     int cursor;
     int validPosition;
@@ -180,3 +180,34 @@ int placeShip(Map map, Ship ship)
     return validPosition;
 }
 
+int unplaceShip(MapWrap map, Ship ship)
+{
+    int cursor;
+    Coordinate point;
+    
+    // WARNING: no control is made to check if ship has legal points
+
+    /* if the ship is placeable, it is then placed */
+    for ( cursor = 0; cursor < ship.length; cursor++ )
+    {
+        point.x = ship.points[cursor].x;
+        point.y = ship.points[cursor].y;
+
+        addToMap(map, point, EMPTY_CHAR);
+
+    }
+
+    return 1;
+}
+
+int moveShip(Ship *ship, int deltaX, int deltaY)
+{
+    int pointCursor;
+    for ( pointCursor = 0; pointCursor < ship -> length; pointCursor++ )
+    {
+        ship -> points[pointCursor].x += deltaX;
+        ship -> points[pointCursor].y += deltaY;
+    }
+
+    return 1;
+}
