@@ -20,16 +20,23 @@ typedef struct
 
 typedef char Map[DEFAULT_MAP_HEIGHT][DEFAULT_MAP_WIDTH];
 
+typedef struct
+{
+    Map map;
+    Coordinate dims;
+}MapWrap;
+
 extern int MAP_WIDTH;
 extern int MAP_HEIGHT;
 
-void empty(Map map);
+void empty(MapWrap map);
 
-char getFromMap(Map map, Coordinate coord);
+char getFromMap(MapWrap map, Coordinate coord);
 
-void addToMap(Map map, Coordinate coord, char symbol);
+void addToMap(MapWrap map, Coordinate coord, char symbol);
 
-void mAddToMap(Map map, Coordinate *coord, int length, char symbol);
+void mAddToMap(MapWrap map, Coordinate *points, int length, char symbol);
 
-void printMap(Map map);
+void printMap(MapWrap map);
+
 #endif

@@ -4,49 +4,50 @@
 int MAP_WIDTH = DEFAULT_MAP_WIDTH;
 int MAP_HEIGHT = DEFAULT_MAP_HEIGHT;
 
-void empty(Map map)
+void empty(MapWrap map)
 {
     int cursorX, cursorY;
-    for (cursorY = 0; cursorY < MAP_HEIGHT; cursorY++)
+    for (cursorY = 0; cursorY < map.dims.y; cursorY++)
     {
-        for (cursorX = 0; cursorX < MAP_WIDTH; cursorX++)
+        for (cursorX = 0; cursorX < map.dims.x; cursorX++)
         {
-            map[cursorY][cursorX] = EMPTY_CHAR;     //might be changed to addToMap
+            map.map[cursorY][cursorX] = EMPTY_CHAR;     //might be changed to addToMap
         }
 
     }
 
 }
 
-void addToMap(Map map, Coordinate coord, char symbol)
+char getFromMap(MapWrap map, Coordinate coord)
 {
-    map[coord.y][coord.x] = symbol;
+    return map.map[coord.y][coord.x];
 }
 
-void mAddToMap(Map map, Coordinate *coord, int length, char symbol)
+void addToMap(MapWrap map, Coordinate coord, char symbol)
+{
+    map.map[coord.y][coord.x] = symbol;
+}
+
+void mAddToMap(MapWrap map, Coordinate *points, int length, char symbol)
 {
     int cursor;
 
     for ( cursor = 0; cursor < length; cursor++ )
     {
-        map[coord[cursor].y][coord[cursor].x] = symbol;
+        map.map[points[cursor].y][points[cursor].x] = symbol;
     }
 }
 
-char getFromMap(Map map, Coordinate coord)
-{
-    return map[coord.y][coord.x];
-}
 
-void printMap(Map map)
+void printMap(MapWrap map)
 {
     int cursorX, cursorY;
-    for (cursorY = 0; cursorY < MAP_HEIGHT; cursorY++)
+    for (cursorY = 0; cursorY < map.dims.y; cursorY++)
     {
         printf("\n\n\n\t\t\t");
-        for (cursorX = 0; cursorX < MAP_WIDTH; cursorX++)
+        for (cursorX = 0; cursorX < map.dims.x; cursorX++)
         {
-            printf("      %c", map[cursorY][cursorX]);  //might be changed to getFromMap
+            printf("      %c", map.map[cursorY][cursorX]);  //might be changed to getFromMap
         }
 
     }
