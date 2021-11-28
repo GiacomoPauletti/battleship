@@ -5,7 +5,7 @@
 int SHIP_NUMBER = DEFAULT_SHIP_NUM;
 
 
-void initDefaultArmy(Ship *defaultArmy)
+void initDefaultArmy(Army *defaultArmy)
 {
     int lengthCursorA, shipCursorB, pointCursor;
     int shipLength;
@@ -18,12 +18,12 @@ void initDefaultArmy(Ship *defaultArmy)
 
         for ( shipCursorB = 0; shipCursorB <= 4 - lengthCursorA; shipCursorB++)
         {
-            defaultArmy[shipCounter].length = lengthCursorA;
+            defaultArmy -> ships[shipCounter].length = lengthCursorA;
             
             for ( pointCursor = 0; pointCursor < lengthCursorA; pointCursor++)
             {
-                defaultArmy[shipCounter].points[pointCursor].x = MAP_WIDTH / 2 - 1;
-                defaultArmy[shipCounter].points[pointCursor].y = 2 + pointCursor;
+                defaultArmy -> ships[shipCounter].points[pointCursor].x = MAP_WIDTH / 2 - 1;
+                defaultArmy -> ships[shipCounter].points[pointCursor].y = 2 + pointCursor;
             }
 
             shipCounter++;

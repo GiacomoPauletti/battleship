@@ -19,8 +19,14 @@ typedef struct
     
 } Ship;
 
+typedef struct
+{
+    Ship ships[MAX_SHIP_NUM];
+    int shipNum;
 
-void initDefaultArmy(Ship *defaultArmy);
+} Army;
+
+void initDefaultArmy(Army *defaultArmy);
 /* initDefaultArmy
  * This function initializes the default ship army used during the game
  */
