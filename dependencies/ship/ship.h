@@ -64,7 +64,7 @@ int isPlaceable(MapWrap map, Ship ship);
  * If it is not placeable, 0 will be returned.
  */
 
-int placeShip(MapWrap map, Ship ship);
+int placeShip(MapWrap *map, Ship ship);
 /* placeShip
  * First checks whether a ship is placeable by calling isPlaceable.
  * If the ship is placeable, it places it.
@@ -72,7 +72,7 @@ int placeShip(MapWrap map, Ship ship);
  * Returns 1 if success, 0 if error
  */
 
-int unplaceShip(MapWrap map, Ship ship);
+int unplaceShip(MapWrap *map, Ship ship);
 /* unplaceShip
  * Remove given ship from given map
  *
@@ -84,6 +84,14 @@ int moveShip(Ship *ship, int deltaX, int deltaY);
  * translate ship on x-axis and y-axis respectively of deltaX and deltaY
  *
  * Returns 1 if success, 0 if error
+ */
+
+int checkMovValidity(MapWrap map, Ship ship, int deltaX, int deltaY);
+/* checkMovValidity
+ * checks whether moving the ship is valid.
+ * Movement is not valid if ship moves outside map borders.
+ * 
+ * Returns 1 if movement is valid, 0 if not.
  */
 
 void rotateACShip(Ship *ship, Coordinate center);

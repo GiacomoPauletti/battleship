@@ -10,4 +10,6 @@
 
 typedef struct {} MenuData;
 
+void mainMenu( MenuData data);
+
 #endif

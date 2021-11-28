@@ -4,14 +4,14 @@
 int MAP_WIDTH = DEFAULT_MAP_WIDTH;
 int MAP_HEIGHT = DEFAULT_MAP_HEIGHT;
 
-void empty(MapWrap map)
+void empty(MapWrap *map)
 {
     int cursorX, cursorY;
-    for (cursorY = 0; cursorY < map.dims.y; cursorY++)
+    for (cursorY = 0; cursorY < map -> dims.y; cursorY++)
     {
-        for (cursorX = 0; cursorX < map.dims.x; cursorX++)
+        for (cursorX = 0; cursorX < map -> dims.x; cursorX++)
         {
-            map.map[cursorY][cursorX] = EMPTY_CHAR;     //might be changed to addToMap
+            map -> map[cursorY][cursorX] = EMPTY_CHAR;     //might be changed to addToMap
         }
 
     }
@@ -23,18 +23,18 @@ char getFromMap(MapWrap map, Coordinate coord)
     return map.map[coord.y][coord.x];
 }
 
-void addToMap(MapWrap map, Coordinate coord, char symbol)
+void addToMap(MapWrap *map, Coordinate coord, char symbol)
 {
-    map.map[coord.y][coord.x] = symbol;
+    map -> map[coord.y][coord.x] = symbol;
 }
 
-void mAddToMap(MapWrap map, Coordinate *points, int length, char symbol)
+void mAddToMap(MapWrap *map, Coordinate *points, int length, char symbol)
 {
     int cursor;
 
     for ( cursor = 0; cursor < length; cursor++ )
     {
-        map.map[points[cursor].y][points[cursor].x] = symbol;
+        map -> map[points[cursor].y][points[cursor].x] = symbol;
     }
 }
 

@@ -29,13 +29,13 @@ typedef struct
 extern int MAP_WIDTH;
 extern int MAP_HEIGHT;
 
-void empty(MapWrap map);
+void empty(MapWrap *map);
 
 char getFromMap(MapWrap map, Coordinate coord);
 
-void addToMap(MapWrap map, Coordinate coord, char symbol);
+void addToMap(MapWrap *map, Coordinate coord, char symbol);
 
-void mAddToMap(MapWrap map, Coordinate *points, int length, char symbol);
+void mAddToMap(MapWrap *map, Coordinate *points, int length, char symbol);
 
 void printMap(MapWrap map);
 

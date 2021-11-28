@@ -2,21 +2,26 @@
 
 void playerArmySetup(Player* player, Army gameArmy)
 {
-    int shipCounter;
     int playerDone;
     char input;
-    int inputNumber;
+    int inputNumber, currentNumber;
+
+    int shipCounter;
+    int armyDone[gameArmy.shipNum];
 
     Coordinate cursor;
 
-    Ship selectedShip;
 
+    currentNumber = -1;
     shipCounter = 0;
     playerDone = 0;
     while ( playerDone == 0 )
     {
+        clearScreen();
+        printMap( player -> defenceMap );
+
         #if defined(__linux__)
-        input = getchar();        
+        input = getchar();
         #else
         input = getch();
         #endif
@@ -24,49 +29,88 @@ void playerArmySetup(Player* player, Army gameArmy)
         inputNumber = input - '0';
         if ( inputNumber >= 0 && inputNumber < DEFAULT_SHIP_NUM )
         {
-            selectedShip = gameArmy.ships[inputNumber];
-            cursor.x = ( player -> defenceMap.dims.x ) / 2 - 1;
-            cursor.y = ( player -> defenceMap.dims.y ) / 2 - 1;
+            currentNumber = inputNumber; 
+            cursor.x = gameArmy.ships[inputNumber].points[0].x;
+            cursor.x = gameArmy.ships[inputNumber].points[0].y;
 
-            placeShip(player -> defenceMap, selectedShip);
+            placeShip(&(player -> defenceMap), gameArmy.ships[inputNumber]);
+
+            if ( !armyDone[inputNumber])
+            {
+                armyDone[inputNumber] = 1;
+                shipCounter++;
+            }
+
+            inputNumber = -1;
 
         }
-        else
+        else if ( currentNumber >= 0 )
         {
-            switch (input)
+            if (input != '\n')
             {
-                    case 'w':
-                        unplaceShip(player -> defenceMap, selectedShip);
-                        moveShip(&selectedShip, 0, -1);
-                        placeShip(player -> defenceMap, selectedShip);
-                        break;
-                    case 'd':
-                        unplaceShip(player -> defenceMap, selectedShip);
-                        moveShip(&selectedShip, 1, 0);
-                        placeShip(player -> defenceMap, selectedShip);
-                        break;
-                    case 's':
-                        unplaceShip(player -> defenceMap, selectedShip);
-                        moveShip(&selectedShip, 1, 0);
-                        placeShip(player -> defenceMap, selectedShip);
-                        break;
-                    case 'a':
-                        unplaceShip(player -> defenceMap, selectedShip);
-                        moveShip(&selectedShip, -1, 0);
-                        placeShip(player -> defenceMap, selectedShip);
-                        break;
-                    
-                    case 'r':
-                        unplaceShip(player -> defenceMap, selectedShip);
-                        rotateACShip(&selectedShip, selectedShip.points[0]);
-                        break;
 
-                    case 'k':
-                        if ( shipCounter == gameArmy.shipNum ) playerDone = 1;
-                        break;
+                switch (input)
+                {
+                        case 'w':
 
-                    default:
-                        break;
+                            if ( checkMovValidity(player -> defenceMap, gameArmy.ships[currentNumber], 0, -1) )
+                            {
+                                unplaceShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+
+                                moveShip(&(gameArmy.ships[currentNumber]), 0, -1);
+                                cursor.y += -1;
+                                placeShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+
+                            }
+
+                            break;
+                        case 'd':
+                            if ( checkMovValidity(player -> defenceMap, gameArmy.ships[currentNumber], 1, 0) )
+                            {
+                                unplaceShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+
+                                moveShip(&(gameArmy.ships[currentNumber]), 1, 0);
+                                cursor.x += 1;
+
+                                placeShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+                            }
+                            break;
+                        case 's':
+                            if ( checkMovValidity(player -> defenceMap, gameArmy.ships[currentNumber], 0, 1) )
+                            {
+                                unplaceShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+
+                                moveShip(&(gameArmy.ships[currentNumber]), 0, 1);
+                                cursor.y += 1;
+
+                                placeShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+                            }
+                            break;
+                        case 'a':
+                            if ( checkMovValidity(player -> defenceMap, gameArmy.ships[currentNumber], -1, 0) )
+                            {
+                                unplaceShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+
+                                moveShip(&(gameArmy.ships[currentNumber]), -1, 0);
+                                cursor.x += -1;
+
+                                placeShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+                            }
+                            break;
+                        
+                        case 'r':
+                            unplaceShip(&(player -> defenceMap), gameArmy.ships[currentNumber]);
+                            rotateACShip(&(gameArmy.ships[currentNumber]), gameArmy.ships[currentNumber].points[0]);
+                            break;
+
+                        case 'k':
+                            if ( shipCounter == gameArmy.shipNum ) playerDone = 1;
+                            break;
+
+                        default:
+                            break;
+                }
+
             }
         }
 

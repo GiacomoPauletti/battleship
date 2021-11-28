@@ -96,7 +96,7 @@ int isLegal(Ship ship)
     checkedShip.points[0] = ship.points[0];
     checkedShip.length = 1;
 
-    mAddToMap(map, ship.points, ship.length, SAFE_SHIP_CHAR);
+    mAddToMap(&map, ship.points, ship.length, SAFE_SHIP_CHAR);
     /* creating and adding to map the ship, so that findShip finds
      * all consecutive points of the drawn ship
      */
@@ -157,14 +157,15 @@ int isPlaceable(MapWrap map, Ship ship)
     return isPlaceable;
 }
 
-int placeShip(MapWrap map, Ship ship)
+int placeShip(MapWrap *map, Ship ship)
 {
     int cursor;
     int validPosition;
     Coordinate point;
     
+
     /* if the ship is placeable, it is then placed */
-    validPosition = isPlaceable(map, ship);
+    validPosition = isPlaceable(*map, ship);
     if ( validPosition == 1)
     {
         for ( cursor = 0; cursor < ship.length; cursor++ )
@@ -180,18 +181,21 @@ int placeShip(MapWrap map, Ship ship)
     return validPosition;
 }
 
-int unplaceShip(MapWrap map, Ship ship)
+int unplaceShip(MapWrap *map, Ship ship)
 {
     int cursor;
     Coordinate point;
     
     // WARNING: no control is made to check if ship has legal points
 
+
+
     /* if the ship is placeable, it is then placed */
     for ( cursor = 0; cursor < ship.length; cursor++ )
     {
         point.x = ship.points[cursor].x;
         point.y = ship.points[cursor].y;
+
 
         addToMap(map, point, EMPTY_CHAR);
 
@@ -209,7 +213,24 @@ int moveShip(Ship *ship, int deltaX, int deltaY)
         ship -> points[pointCursor].y += deltaY;
     }
 
+
     return 1;
+}
+
+int checkMovValidity(MapWrap map, Ship ship, int deltaX, int deltaY)
+{
+    int cursor;
+    int isMovValid;
+
+    isMovValid = 1;
+    for ( cursor = 0; cursor < ship.length && isMovValid == 1; cursor++ )
+    {
+        if ( ( ship.points[cursor].x + deltaX < 0 || ship.points[cursor].x + deltaX >= map.dims.x ) ||
+             ( ship.points[cursor].y + deltaY < 0 || ship.points[cursor].y + deltaY >= map.dims.y ) )
+             isMovValid = 0;
+    }
+
+    return isMovValid;
 }
 
 

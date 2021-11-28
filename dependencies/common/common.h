@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "../map/map.h"
 #include "../ship/ship.h"
 
@@ -16,4 +17,7 @@ typedef struct
     int shipNumber;
 
 } Player;
+
+int clearScreen();
+
 #endif

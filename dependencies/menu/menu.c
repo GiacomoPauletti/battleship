@@ -8,11 +8,15 @@
 
 typedef struct {} GameSettings;
 
+void playLocal(MenuData);
+
 void mainMenu(MenuData data)
 {
     printf("|———————————————————————— MAIN MENU ————————————————————————|\n");
     printf("\n");
-    printf("Choose between the following options:\n");
+    //printf("Choose between the following options:\n");
+
+    playLocal( (MenuData) {} );
 }
 
 GameSettings loadGameSettings()
@@ -38,24 +42,33 @@ void playLocal(MenuData data)
     curSettings = loadGameSettings();
 
     /* ----------------------------------- GAME SETUP --------------------------------- */
-    printf("Great, now let's setup the game...");
-    empty(player1.attackMap);
-    empty(player1.defenceMap);
 
-
-    empty(player2.attackMap);
-    empty(player2.defenceMap);
+    clearScreen();
+    printf("Great, now let's setup the game...\n\n");
 
     /* setting map dimensions */
     player2.attackMap.dims.x = player2.defenceMap.dims.x = player1.attackMap.dims.x = player1.defenceMap.dims.x = MAP_WIDTH;
     player2.attackMap.dims.y = player2.defenceMap.dims.y = player1.attackMap.dims.y = player1.defenceMap.dims.y = MAP_WIDTH;
+
+    empty(&(player1.attackMap));
+    empty(&(player1.defenceMap));
+
+    //printf("Here it is: %c\n", player1.defenceMap.map[0][0]);
+
+    empty(&(player2.attackMap));
+    empty(&(player2.defenceMap));
+
     
 
     player1.shipNumber = player2.shipNumber = DEFAULT_SHIP_NUM;
 
 
     initDefaultArmy(&defaultArmy);
+    
+
     printf("%s, it's time to place your ships!\n", player1.name);
+    printf("When your are ready, press enter... ");
+    (void) getchar();
 
     /* con i numeri da 1 a 10 seleziona la nave da piazzare
      *      -> di fianco fa vedere i numeri delle navi, facendo vedere se è stata messa o meno

@@ -32,7 +32,7 @@ o888bood8P'  `Y888\"\"8o   \"888\"   \"888\" o888o `Y8bod8P' 8\"\"888P' o888o o8
 
     printf("\n\n\n\n");
 
-
+    mainMenu( (MenuData) {});
 
     return 0;
 }
