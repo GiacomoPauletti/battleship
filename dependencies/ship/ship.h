@@ -86,4 +86,13 @@ int moveShip(Ship *ship, int deltaX, int deltaY);
  * Returns 1 if success, 0 if error
  */
 
+void rotateACShip(Ship *ship, Coordinate center);
+/* rotateAntiC
+ * rotates anti-clockwise around the center the given ship.
+ */
+
+void rotateCShip(Ship *ship, Coordinate center);
+/* rotateC
+ * rotates clockwise around the center the given ship
+ */
 #endif

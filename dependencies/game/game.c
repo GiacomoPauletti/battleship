@@ -58,7 +58,7 @@ void playerArmySetup(Player* player, Army gameArmy)
                     
                     case 'r':
                         unplaceShip(player -> defenceMap, selectedShip);
-                        rotateAntiC(&selectedShip);
+                        rotateACShip(&selectedShip, selectedShip.points[0]);
                         break;
 
                     case 'k':
