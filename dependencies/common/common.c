@@ -1,5 +1,8 @@
 #include "common.h"
 #include <stdlib.h>
+#if !defined(__linux__)
+#include <cursio.h>
+#endif
 
 int clearScreen()
 {
@@ -7,5 +10,14 @@ int clearScreen()
     system("clear");
     #else
     system("cls");
+    #endif
+}
+
+char getch_()
+{
+    #if defined(__linux__)
+    getchar();
+    #else
+    getch();
     #endif
 }

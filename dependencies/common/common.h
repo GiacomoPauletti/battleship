@@ -16,8 +16,12 @@ typedef struct
     Ship ships[MAX_SHIP_NUM];
     int shipNumber;
 
+    int winner;
+
 } Player;
 
 int clearScreen();
+
+char getch_();
 
 #endif
