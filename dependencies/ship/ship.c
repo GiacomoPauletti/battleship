@@ -19,6 +19,7 @@ int initDefaultArmy(Army *defaultArmy)
         for ( shipCursorB = 0; shipCursorB <= 4 - lengthCursorA; shipCursorB++)
         {
             defaultArmy -> ships[shipCounter].length = lengthCursorA;
+            defaultArmy -> ships[shipCounter].hitCounter = 0;
             
             for ( pointCursor = 0; pointCursor < lengthCursorA; pointCursor++)
             {
@@ -31,6 +32,7 @@ int initDefaultArmy(Army *defaultArmy)
         }
 
     }
+    defaultArmy -> shipNum = 10;
 }
 
 
@@ -219,20 +221,93 @@ int moveShip(Ship *ship, int deltaX, int deltaY)
 
 int checkMovValidity(MapWrap map, Ship ship, int deltaX, int deltaY)
 {
-    int cursor;
+    int cursorA;
+    int cursorB;
     int isMovValid;
 
     isMovValid = 1;
-    for ( cursor = 0; cursor < ship.length && isMovValid == 1; cursor++ )
+    for ( cursorA = 0; cursorA < ship.length && isMovValid == 1; cursorA++ )
     {
-        if ( ( ship.points[cursor].x + deltaX < 0 || ship.points[cursor].x + deltaX >= map.dims.x ) ||
-             ( ship.points[cursor].y + deltaY < 0 || ship.points[cursor].y + deltaY >= map.dims.y ) )
+        if ( ( ship.points[cursorA].x + deltaX < 0 || ship.points[cursorA].x + deltaX >= map.dims.x ) ||
+             ( ship.points[cursorA].y + deltaY < 0 || ship.points[cursorA].y + deltaY >= map.dims.y ) )
              isMovValid = 0;
+        else if( map.map[ship.points[cursorA].y + deltaY][ship.points[cursorA].x + deltaX] != EMPTY_CHAR )
+        {
+            isMovValid = 0;
+            for ( cursorB = 0; cursorB < ship.length && isMovValid == 0; cursorB++ )
+            {
+                if ( ( ship.points[cursorA].x + deltaX == ship.points[cursorB].x ) &&
+                    ( ship.points[cursorA].y + deltaY == ship.points[cursorB].y) )
+                    isMovValid = 1;
+            }
+        }
     }
 
     return isMovValid;
 }
 
+
+int checkACRotValidity(MapWrap map, Ship ship, Coordinate center)
+{
+    int cursorA;
+    int cursorB;
+    int isRotValid;
+
+    Ship rotatedShip = ship;
+
+    rotateACShip(&rotatedShip, center);
+
+    isRotValid = 1;
+    for ( cursorA = 0; cursorA < ship.length && isRotValid == 1; cursorA++ )
+    {
+        if ( ( rotatedShip.points[cursorA].x < 0 || rotatedShip.points[cursorA].x >= map.dims.x ) ||
+             ( rotatedShip.points[cursorA].y >= map.dims.y ) )
+             isRotValid = 0;
+        else if( map.map[rotatedShip.points[cursorA].y][rotatedShip.points[cursorA].x] != EMPTY_CHAR )
+        {
+            isRotValid = 0;
+            for ( cursorB = 0; cursorB < ship.length && isRotValid == 0; cursorB++ )
+            {
+                if ( ( rotatedShip.points[cursorA].x == ship.points[cursorB].x ) &&
+                    ( rotatedShip.points[cursorA].y == ship.points[cursorB].y) )
+                    isRotValid = 1;
+            }
+        }
+    }
+
+    return isRotValid;
+}
+
+int checkCRotValidity(MapWrap map, Ship ship, Coordinate center)
+{
+    int cursorA;
+    int cursorB;
+    int isRotValid;
+
+    Ship rotatedShip = ship;
+
+    rotateCShip(&rotatedShip, center);
+
+    isRotValid = 1;
+    for ( cursorA = 0; cursorA < ship.length && isRotValid == 1; cursorA++ )
+    {
+        if ( ( rotatedShip.points[cursorA].x < 0 || rotatedShip.points[cursorA].x >= map.dims.x ) ||
+             ( rotatedShip.points[cursorA].y >= map.dims.y ) )
+             isRotValid = 0;
+        else if( map.map[rotatedShip.points[cursorA].y][rotatedShip.points[cursorA].x] != EMPTY_CHAR )
+        {
+            isRotValid = 0;
+            for ( cursorB = 0; cursorB < ship.length && isRotValid == 0; cursorB++ )
+            {
+                if ( ( rotatedShip.points[cursorA].x == rotatedShip.points[cursorB].x ) &&
+                    ( rotatedShip.points[cursorA].y == rotatedShip.points[cursorB].y) )
+                    isRotValid = 1;
+            }
+        }
+    }
+
+    return isRotValid;
+}
 
 void rotateACShip(Ship *ship, Coordinate center)
 {

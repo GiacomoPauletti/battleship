@@ -8,11 +8,17 @@
 
 typedef struct {} GameSettings;
 
+typedef int (* GameHandler)(Player *player1, Player *player2);
+
+void turnHandler(Player *player1, Player *player2, GameHandler gameHandler1, GameHandler gameHandler2);
+
 void playLocal(MenuData);
+
+int winHandler(Player *player1, Player *player2);
 
 void mainMenu(MenuData data)
 {
-    printf("|———————————————————————— MAIN MENU ————————————————————————|\n");
+    printf("|————————————————————————————————————————————— MAIN MENU —————————————————————————————————————————————|\n");
     printf("\n");
     //printf("Choose between the following options:\n");
 
@@ -58,7 +64,7 @@ void playLocal(MenuData data)
     empty(&(player2.attackMap));
     empty(&(player2.defenceMap));
 
-    
+    player1.winner = player2.winner = 0;
 
     player1.shipNumber = player2.shipNumber = DEFAULT_SHIP_NUM;
 
@@ -68,22 +74,98 @@ void playLocal(MenuData data)
 
     printf("%s, it's time to place your ships!\n", player1.name);
     printf("When your are ready, press enter... ");
-    (void) getchar();
+    fflush(stdin);
+    (void) getch_();
 
-    /* con i numeri da 1 a 10 seleziona la nave da piazzare
-     *      -> di fianco fa vedere i numeri delle navi, facendo vedere se è stata messa o meno
-     *
-     * con wasd sposta il cursore sulla mappa
-     * con r ruota la nave
-     * con '\n' (enter) inserisce la nave
-     * come si puo cancellare una nave già messa?
-     *      -> quando con un numero si seleziona una nave già messa poi con - si può rimuovere
-     *         la nave già posizionata
-     */
-    
-    playerArmySetup(&player1, defaultArmy);
+    //playerArmySetup(&player1, defaultArmy);
+
+    printf("%s, it's time to place your ships!\n", player2.name);
+    printf("When your are ready, press enter... ");
+    fflush(stdin);
+    (void) getch_();
+
     //playerArmySetup(&player2, defaultArmy);
+
+    // DEBUGGING
+    FILE* pfile;
+
+    //pfile = fopen("player_army.txt", "w+");
+    //fwrite(&(player1), sizeof(player1), 1, pfile);
+    //fwrite(&(player2), sizeof(player1), 1, pfile);
+
+    pfile = fopen("player_army.txt", "r");
+    fread(&(player1), sizeof(player1), 1, pfile);
+    fread(&(player2), sizeof(player2), 1, pfile);
+
+    // end of DEBUGGING
+
+    printMap(player1.defenceMap);
+    printMap(player2.defenceMap);
+  
+    fclose(pfile);
+
         
-    
+    printf("|————————————————————————————————————————————— BATTLESHIP MATCH —————————————————————————————————————————————|\n");
+    turnHandler(&player1, &player2, localGameHandler, localGameHandler);
+
+    if ( player1.winner == 1 ) winHandler(&player1, &player2);
+    else if (player2.winner == 1 ) winHandler(&player2, &player1);
+    else printf("Something went wrong.\nNobody won :(\n");
+
+    printf("Press any key to go back to menu ...");
+    fflush(stdin);
+    (void) getch_();
+
 }
 
+void turnHandler(Player *player1, Player *player2, GameHandler gameHandler1, GameHandler gameHandler2)
+{
+    int numSunkP1, numSunkP2;
+    int result;
+    Player *curPlayer;
+
+    numSunkP2 = numSunkP1 = 0;
+
+    curPlayer = player1; 
+    while ( numSunkP1 < player1 -> shipNumber && numSunkP2 < player2 -> shipNumber )
+    {
+        printf("%s, it's your turn: ", curPlayer -> name);
+         
+        if ( curPlayer == player1 )
+        {
+            result = gameHandler1(player1, player2);
+
+            if ( result == 1 )
+            /* one ship has been sunk */
+            {
+                numSunkP2++;
+            }
+
+            curPlayer = player2;
+        }
+        else
+        {
+            result = gameHandler2(player2, player1);
+
+            if ( result == 1 )
+            /* one ship has been sunk */
+            {
+                numSunkP1++;
+            }
+
+            curPlayer = player1;
+        }
+
+    }
+    
+    if ( numSunkP1 > numSunkP2 ) player2 -> winner = 1;
+    else player1 -> winner = 1;
+
+}
+
+int winHandler(Player *player1, Player *player2)
+{
+    printf("Congratulation %s you won this match!!\n", player1 -> name);
+
+    return 1;
+}

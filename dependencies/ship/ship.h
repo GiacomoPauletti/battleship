@@ -94,6 +94,22 @@ int checkMovValidity(MapWrap map, Ship ship, int deltaX, int deltaY);
  * Returns 1 if movement is valid, 0 if not.
  */
 
+int checkACRotValidity(MapWrap map, Ship ship, Coordinate center);
+/* checkACRotValidity
+ * checks whether rotating anti-clockwise the ship is valid.
+ * Rotation is not valid if ship points would get placed outside map borders.
+ * 
+ * Returns 1 if rotation is valid, 0 if not.
+ */
+
+int checkCRotValidity(MapWrap map, Ship ship, Coordinate center);
+/* checkCRotValidity
+ * checks whether rotating clockwise the ship is valid.
+ * Rotation is not valid if ship points would get placed outside map borders.
+ * 
+ * Returns 1 if rotation is valid, 0 if not.
+ */
+
 void rotateACShip(Ship *ship, Coordinate center);
 /* rotateAntiC
  * rotates anti-clockwise around the center the given ship.
