@@ -1,9 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "database.h"
 
 static int createSettings();
+static int setDefaultSettings();
 
+/* Used only to create database the first time.
+ * If used again, it does nothing because "data" folder is already present */
 int createDatabase()
 {
     int result;
@@ -25,6 +26,9 @@ int createDatabase()
     return 0;
 }
 
+/* INTERNAL USE, SHOULD NOT BE USED OUT OF database.c
+ * Used only when database is generated to create the "settings" subdirectory.
+ * If used again, it does nothing because "settings" folder is already present */
 static int createSettings()
 {
     int result;
@@ -36,14 +40,21 @@ static int createSettings()
 
     sprintf(command, "mkdir %s", settingsPath);
     result = system(command);
-
     if ( result != 0 ) return -1;
 
     sprintf(command, "touch %s/default.txt", settingsPath);
     result = system(command);
+    if ( result != 0 ) return -1;
 
+    result = setDefaultSettings();
     if ( result != 0 ) return -1;
 
     return 0;
 }
 
+/* INTERNAL USE, SHOULD NOT BE USED OUT OF database.c
+ * Used only when database is generated to fill "settings/default.txt" with default settings */
+static int setDefaultSettings()
+{
+    return 0;
+}

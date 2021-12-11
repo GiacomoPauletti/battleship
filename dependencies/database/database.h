@@ -20,5 +20,6 @@
 #endif
 
 int createDatabase();
+/* creates all the database */
 
 #endif

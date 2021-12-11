@@ -20,6 +20,13 @@ typedef struct
 
 } Player;
 
+typedef struct
+{
+    char safe_ship_symbol;
+    char hit_ship_symbol;
+    char empty_symbol;
+} Settings;
+
 int clearScreen();
 
 char getch_();

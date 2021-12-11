@@ -4,6 +4,7 @@
 #include "dependencies/ship/ship.h"
 #include "dependencies/common/common.h"
 #include "dependencies/menu/menu.h"
+#include "dependencies/database/database.h"
 
 #define MAX_NAME_LENGTH 20
 /* maximum length of player name */
@@ -11,12 +12,12 @@
 int main()
 {
     Player player1, player2;
+    int result;
 
-    #if defined(_WIN32) || defined(_WIN64)
-        system("cls");
-    #else
-        system("clear");
-    #endif
+    clearScreen();
+
+    (void) createDatabase();
+    /* creating database, if not done yet */
 
     printf("\n\n\
 oooooooooo.                .       .   oooo                     oooo         o8o                      \n\
