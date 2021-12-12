@@ -35,8 +35,9 @@ void playerArmySetup(Player* player, Army gameArmy)
     while ( playerDone == 0 )
     {
         clearScreen();
+        printf("\n");
         printf("%s, please place your army\n", player -> name);
-        printf("type 'i' for help and information on you army\n");
+        printf("Type 'i' for help and information on you army\n");
         printf("You placed %d ships until now", shipCounter);
         printMap( player -> defenceMap );
 
@@ -167,6 +168,7 @@ void playerArmySetup(Player* player, Army gameArmy)
                 "\t[r]: rotate the ship \n"
                 "\t[-]: remove ship form map \n", gameArmy.shipNum);
 
+            printf("If something goes wrong and you want to kill the program, use ctrl + C\n");
             printf("\n\n\n");
 
             printf("These are the ships you can place: \n");
@@ -236,9 +238,9 @@ int localGameHandler(Player *player1, Player *player2)
 
         printf("\n\n");
         if (curMap == &(player1 -> attackMap))
-            printf("\t\t\t\t\t\t ATTACK MAP\n");
+            printCenter("ATTACK MAP");
         else
-            printf("\t\t\t\t\t\t\t DEFENCE MAP\n");
+            printCenter("DEFENCE MAP");
 
         printMap(*curMap);
         printf("[%s] Type 'i' for help and information on the game\n", player1 -> name);
@@ -314,12 +316,14 @@ int localGameHandler(Player *player1, Player *player2)
 
                 case 'i':
                     clearScreen();
-                    printf("HOW TO PLACE:\n"
-                        "\t[w,a,s,d]: move the cursor around the map\n"
-                        "\t[k] confirms bomb location and ends the turn\n"
-                        "\t[m] used to switch between defence and attack map\n");
+                    printCenter("HOW TO PLAY");
+                    printf("\n");
+                    printCenter("[w,a,s,d]: move the cursor around the map");
+                    printCenter("[k] confirms bomb location and ends the turn");
+                    printCenter("[m] used to switch between defence and attack map");
                     printf("\n\n");
-                    printf("When done press 'k' and then enter...");
+                    printCenter("When done press 'k' and then enter");
+                    printf("\n\n\n");;
                     while ( getch_() != 'k');
                     break;
 
@@ -337,12 +341,14 @@ int localGameHandler(Player *player1, Player *player2)
             switch (input)
             {
                 case 'i':
-                    printf("HOW TO PLACE:\n"
-                        "\t[w,a,s,d]: move the cursor around the map\n"
-                        "\t[k] confirms bomb location and ends the turn"
-                        "\t[m] used to switch between defence and attack map");
+                    printCenter("HOW TO PLAY");
+                    printf("\n");
+                    printCenter("[w,a,s,d]: move the cursor around the map");
+                    printCenter("[k] confirms bomb location and ends the turn");
+                    printCenter("[m] used to switch between defence and attack map");
                     printf("\n\n");
-                    printf("When done press 'k' and then enter...");
+                    printCenter("When done press 'k' and then enter");
+                    printf("\n\n\n");;
                     while ( getch_() != 'k' );
                     break;
                 case 'm':
@@ -358,10 +364,11 @@ int localGameHandler(Player *player1, Player *player2)
     
     clearScreen();
     if ( ( player2 -> defenceMap.map[cursor.y][cursor.x] == SAFE_SHIP_CHAR ) && 
-         ( player1 -> attackMap.map[cursor.y][cursor.x] != HIT_SHIP_CHAR ) )
+         ( player1 -> attackMap.map[cursor.y][cursor.x] != HIT_SHIP_CHAR ) &&
+         ( player1 -> attackMap.map[cursor.y][cursor.x] != WATER_CHAR ) )
     {
-        printf("BOOOOM\n");
-        printf("SHIP HITTED AND ...\n");
+        printCenter("BOOOOM");
+        printCenter("SHIP HITTED AND ...\n");
 
         addToMap(&(player1 -> attackMap), cursor, HIT_SHIP_CHAR);
 
@@ -389,21 +396,25 @@ int localGameHandler(Player *player1, Player *player2)
                         
                         if ( player2 -> ships[shipCursor].hitCounter == player2 -> ships[shipCursor].length )
                         {
-                            printf(" ... SHIP HAS BEEN SUNK!!");
+                            printCenter(" ... SHIP HAS BEEN SUNK!!");
                             isSunk = 1;
                         }
 
                      }
             }
         }
-        if (!isSunk) printf("... unfortunately nothing else\n");
+        if (!isSunk) printCenter("... unfortunately nothing else\n");
     } // end of "ship hit if statement" [if ( player2 -> defenceMap.map[cursor.y][cursor.x] == SAFE_SHIP_CHAR )]
-    else if ( player1 -> attackMap.map[cursor.y][cursor.x] != HIT_SHIP_CHAR )
-        printf("You already hitted this!!");
-    else printf("Nope! You hitted water.\n");
+    else if ( player1 -> attackMap.map[cursor.y][cursor.x] == HIT_SHIP_CHAR )
+        printCenter("You already hitted this!!");
+    else
+    {
+        printCenter("Nope! You hitted water.\n");
+        player1 -> attackMap.map[cursor.y][cursor.x] = WATER_CHAR;
+    }
 
     printf("\n\n");
-    printf("When done press 'k' and then enter...");
+    printCenter("When done press 'k' and then enter...");
     while( getch_() != 'k' );
     fflush(stdin);
 

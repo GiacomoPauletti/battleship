@@ -7,6 +7,8 @@
 #define MAX_NAME_LENGTH 20
 /* maximum length of player name */
 
+#define WIN_SIZE 120
+
 typedef struct
 {
     char name[MAX_NAME_LENGTH + 1];
@@ -30,5 +32,11 @@ typedef struct
 int clearScreen();
 
 char getch_();
+
+int printCenter(char string[]);
+
+int printnlnCenter(char string[]);
+
+void filterNewLine(char string[]);
 
 #endif

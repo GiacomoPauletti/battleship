@@ -3,6 +3,7 @@
 #include "../ship/ship.h"
 #include "../common/common.h"
 #include "../game/game.h"
+#include "../database/database.h"
 
 #if !defined(MENU_H)
 #define MENU_H

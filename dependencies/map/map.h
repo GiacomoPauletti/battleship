@@ -6,6 +6,7 @@
 #define EMPTY_CHAR '.'
 #define HIT_SHIP_CHAR 'X'
 #define SAFE_SHIP_CHAR 'O'
+#define WATER_CHAR 'W'
 
 
 #if !defined(MAP_H)
