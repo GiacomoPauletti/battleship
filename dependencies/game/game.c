@@ -15,10 +15,15 @@ void playerArmySetup(Player* player, Army gameArmy)
     /* boolean array. Each element is 1 if the respectively indexed ship has been placed */
     Coordinate cursor;
     /* user cursor over the map */
+    Coordinate backupCursor;
+    /* used to store previous cursor position */
+    int backupNumber;
+    /* used to store previous currentNumber value */
     int shipCursor;
     /* cursor used to iterate through army ships */
     int curLength, curShipCounter;
     /* used in "case 'i'" */
+    int rowCursor, colCursor;
 
     player -> shipNumber = gameArmy.shipNum;
 
@@ -27,6 +32,9 @@ void playerArmySetup(Player* player, Army gameArmy)
         armyDone[shipCursor] = 0;
         player -> ships[shipCursor].hitCounter = 0;
     }
+
+    cursor.x = cursor.y = -1;
+    /* default values for cursor */
 
     currentNumber = -1;
     /* currentNumber is set to -1 because no ship has been chosen yet */
@@ -49,26 +57,71 @@ void playerArmySetup(Player* player, Army gameArmy)
         {
             /* then select the ship and place it (if it is possible) */
             currentNumber = inputNumber; 
-            cursor.x = gameArmy.ships[inputNumber].points[0].x;
-            cursor.x = gameArmy.ships[inputNumber].points[0].y;
 
+            
 
             if ( !armyDone[inputNumber])
             {
-                /* if it has already been placed, there is no need to place it again */
-                placeShip(&(player -> defenceMap), gameArmy.ships[inputNumber]);
-                /* storing or restoring default position */
-                player -> ships[inputNumber] = gameArmy.ships[inputNumber];
+                if ( checkPosValidity(player -> defenceMap, gameArmy.ships[inputNumber]) != 1)
+                {
+                    clearScreen();
+                    printf("\n");
+                    printCenter("Cannot place the ship because it overlaps with another one.\n");
+                    printCenter("Try to move the ships placed close to the middle in another place\n");
+                    printCenter("Press 'k' to continue...\n");
+                    while ( getch_() != 'k' );
 
-                armyDone[inputNumber] = 1;
-                shipCounter++;
+                    if ( cursor.x != -1 )
+                    {
+                        cursor.x = backupCursor.x;
+                        cursor.y = backupCursor.y;
+                        currentNumber = backupNumber; 
+                    }
+                }
+                else
+                {
+                    /* if it has already been placed, there is no need to place it again */
+                    placeShip(&(player -> defenceMap), gameArmy.ships[inputNumber]);
+                    /* storing or restoring default position */
+                    player -> ships[inputNumber] = gameArmy.ships[inputNumber];
+
+                    armyDone[inputNumber] = 1;
+                    shipCounter++;
+
+                    if ( cursor.x != -1 )
+                    {
+                        backupCursor.x = cursor.x;
+                        backupCursor.y = cursor.y;
+                        backupNumber = currentNumber;
+                    }
+
+                    cursor.x = gameArmy.ships[inputNumber].points[0].x;
+                    cursor.y = gameArmy.ships[inputNumber].points[0].y;
+                }
             }
-            else placeShip(&(player -> defenceMap), player -> ships[inputNumber]);
+            else 
+            // if the ship is already in the map ...
+            {
+
+                //... there is no need for placing it again.
+                //This means that no position check will be made.
+                //The unique action required is moving the cursor to the ship
+                if ( cursor.x != -1 )
+                {
+                    backupCursor.x = cursor.x;
+                    backupCursor.y = cursor.y;
+                    backupNumber = currentNumber;
+                }
+
+                cursor.x = gameArmy.ships[inputNumber].points[0].x;
+                cursor.y = gameArmy.ships[inputNumber].points[0].y;
+            }
+
 
             inputNumber = -1;
 
-        }
-        else if ( currentNumber >= 0 )
+
+        }else if ( currentNumber >= 0 )
         {
             if (input != '\n')
             {

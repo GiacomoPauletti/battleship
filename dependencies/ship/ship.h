@@ -86,6 +86,13 @@ int moveShip(Ship *ship, int deltaX, int deltaY);
  * Returns 1 if success, 0 if error
  */
 
+int checkPosValidity(MapWrap, Ship ship);
+/* checkValidity
+ * checks whether it is possible to place the ship in the map
+ * 
+ * Returns 1 if position is valid, 0 if not.
+ */
+
 int checkMovValidity(MapWrap map, Ship ship, int deltaX, int deltaY);
 /* checkMovValidity
  * checks whether moving the ship is valid.

@@ -219,6 +219,31 @@ int moveShip(Ship *ship, int deltaX, int deltaY)
     return 1;
 }
 
+int checkPosValidity(MapWrap map, Ship ship)
+{    
+    int cursorA;
+    int cursorB;
+    int isPosValid;
+
+    isPosValid = 1;
+    for ( cursorA = 0; cursorA < ship.length && isPosValid == 1; cursorA++ )
+    {
+        if ( ( ship.points[cursorA].x < 0 || ship.points[cursorA].x >= map.dims.x ) ||
+             ( ship.points[cursorA].y < 0 || ship.points[cursorA].y >= map.dims.y ) )
+             isPosValid = 0;
+        else if( map.map[ship.points[cursorA].y][ship.points[cursorA].x] != EMPTY_CHAR )
+        {
+            #if defined(DEBUG_SHIP) || defined(DEBUG_ALL)
+                printf("[DEBUG] in checkPosValidity: non-empty char found...\n");
+            #endif
+
+            isPosValid = 0;
+        }
+    }
+
+    return isPosValid;
+}
+
 int checkMovValidity(MapWrap map, Ship ship, int deltaX, int deltaY)
 {
     int cursorA;
@@ -233,12 +258,20 @@ int checkMovValidity(MapWrap map, Ship ship, int deltaX, int deltaY)
              isMovValid = 0;
         else if( map.map[ship.points[cursorA].y + deltaY][ship.points[cursorA].x + deltaX] != EMPTY_CHAR )
         {
+            #if defined(DEBUG_SHIP) || defined(DEBUG_ALL)
+                printf("[DEBUG] in checkMovValidity: non-empty char found...\n");
+            #endif
             isMovValid = 0;
             for ( cursorB = 0; cursorB < ship.length && isMovValid == 0; cursorB++ )
             {
                 if ( ( ship.points[cursorA].x + deltaX == ship.points[cursorB].x ) &&
                     ( ship.points[cursorA].y + deltaY == ship.points[cursorB].y) )
-                    isMovValid = 1;
+                    {
+                        isMovValid = 1;
+                        #if defined(DEBUG_SHIP) || defined(DEBUG_ALL)
+                            printf("[DEBUG] in checkMovValidity: ... it belongs to the passed ship\n");
+                        #endif
+                    }
             }
         }
     }

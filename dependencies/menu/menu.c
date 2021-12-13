@@ -276,15 +276,16 @@ void playLocal(MenuData data)
     fflush(stdin);
     (void) getch_();
 
-    //playerArmySetup(&player1, defaultArmy);
+    playerArmySetup(&player1, defaultArmy);
 
     printf("%s, it's time to place your ships!\n", player2.name);
     printf("When your are ready, press enter... ");
     fflush(stdin);
     (void) getch_();
 
-    //playerArmySetup(&player2, defaultArmy);
+    playerArmySetup(&player2, defaultArmy);
 
+    #if defined(DEBUG_MENU) || defined(DEBUG_ALL)
     // DEBUGGING
     FILE* pfile;
 
@@ -296,12 +297,13 @@ void playLocal(MenuData data)
     fread(&(player1), sizeof(player1), 1, pfile);
     fread(&(player2), sizeof(player2), 1, pfile);
 
-    // end of DEBUGGING
-
     printMap(player1.defenceMap);
     printMap(player2.defenceMap);
   
     fclose(pfile);
+
+    // end of DEBUGGING
+    #endif
 
     printf("|--------------------------------------------- BATTLESHIP MATCH ---------------------------------------------| \n");
     turnHandler(&player1, &player2, localGameHandler, localGameHandler);
@@ -366,6 +368,7 @@ int winHandler(Player *player1, Player *player2)
 {
     char string[100 + MAX_NAME_LENGTH];
 
+    clearScreen();
     sprintf(string, "Congratulation %s you won this match!!\n", player1 -> name);
     printCenter(string);
 
