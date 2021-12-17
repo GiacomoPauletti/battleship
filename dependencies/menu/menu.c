@@ -2,7 +2,7 @@
 #include "menu.h"
 
 #if !defined(__linux__)
-#include <cursio.h>
+#include <conio.h>
 #endif
 
 

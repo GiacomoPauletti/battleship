@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #if !defined(__linux__)
-#include <cursio.h>
+#include <conio.h>
 #endif
 
 int clearScreen()
