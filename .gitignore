@@ -51,6 +51,16 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+#ADDED BY AUTHOR
 # Vscode files
 .vscode/
 
+#todo list
+todo.txt
+
+#debug stuff
+.debug
+player_army.txt
+
+#database
+data/
