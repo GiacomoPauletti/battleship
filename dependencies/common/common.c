@@ -5,6 +5,8 @@
 #include <conio.h>
 #endif
 
+#define MAX_LINE_LENGTH 300
+
 int clearScreen()
 {
     #if defined(__linux__)
@@ -44,6 +46,41 @@ int printnlnCenter(char string[])
 
     return 1;
 }
+
+/* Prints centered each substring delimited by '\n' */
+int MultiPrintCenter(char string[])
+{
+    int cursor;
+    char currentLine[MAX_LINE_LENGTH];
+    int length;
+
+    cursor = 0;
+    length = 0;
+    while ( string[cursor] != '\0' )
+    {
+        if ( string[cursor] == '\n' )
+        {
+            currentLine[length] = '\0';
+            printCenter(currentLine);
+            length = 0;
+        }
+        else
+        {
+            currentLine[length] = string[cursor];
+            length++;
+        }
+        cursor++;
+    }
+
+    if ( length > 0 )
+    {
+        currentLine[length] = '\0';
+        printCenter(currentLine);
+    }
+
+    return 1;
+}
+
 
 /* Function used to remove new line from string */
 void filterNewLine(char string[])

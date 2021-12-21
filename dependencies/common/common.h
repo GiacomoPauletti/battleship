@@ -37,6 +37,8 @@ int printCenter(char string[]);
 
 int printnlnCenter(char string[]);
 
+int MultiPrintCenter(char string[]);
+
 void filterNewLine(char string[]);
 
 #endif

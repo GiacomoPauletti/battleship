@@ -420,7 +420,16 @@ int localGameHandler(Player *player1, Player *player2)
          ( player1 -> attackMap.map[cursor.y][cursor.x] != HIT_SHIP_CHAR ) &&
          ( player1 -> attackMap.map[cursor.y][cursor.x] != WATER_CHAR ) )
     {
-        printCenter("BOOOOM");
+        //printCenter("BOOOOM");
+        printf("\n");
+        MultiPrintCenter("\
+d8888b.  .d88b.   .d88b.  .88b  d88. \n\
+88  `8D .8P  Y8. .8P  Y8. 88'YbdP`88 \n\
+88oooY' 88    88 88    88 88  88  88 \n\
+88~~~b. 88    88 88    88 88  88  88 \n\
+88   8D `8b  d8' `8b  d8' 88  88  88 \n\
+Y8888P'  `Y88P'   `Y88P'  YP  YP  YP");
+        printf("\n\n");
         printCenter("SHIP HITTED AND ...\n");
 
         addToMap(&(player1 -> attackMap), cursor, HIT_SHIP_CHAR);
