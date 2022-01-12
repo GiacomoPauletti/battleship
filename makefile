@@ -1,6 +1,8 @@
-main: main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o
-	gcc -o main main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o
-	x86_64-w64-mingw32-gcc -o wmain.exe wmain.o dependencies/common/wcommon.o dependencies/game/wgame.o dependencies/map/wmap.o dependencies/menu/wmenu.o dependencies/ship/wship.o dependencies/database/wdatabase.o
+main: main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o dependencies/filesystem/filesystem.o
+	gcc -o main main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o dependencies/filesystem/filesystem.o
+	x86_64-w64-mingw32-gcc -lerrno.h -ldirect.h -o wmain.exe wmain.o dependencies/common/wcommon.o dependencies/game/wgame.o dependencies/map/wmap.o dependencies/menu/wmenu.o dependencies/ship/wship.o dependencies/database/wdatabase.o dependencies/filesystem/filesystem.o
+
+#problem with linking (and finding) errno (and maybe also direct) headers
 
 main.o: main.c dependencies/common/common.h dependencies/game/game.h dependencies/map/map.h dependencies/menu/menu.h dependencies/ship/ship.h
 	gcc -c main.c
@@ -26,9 +28,13 @@ dependencies/common/common.o: dependencies/common/common.c dependencies/common/c
 	gcc -c dependencies/common/common.c -o dependencies/common/common.o 
 	x86_64-w64-mingw32-gcc -l conio.h -c dependencies/common/common.c -o dependencies/common/wcommon.o 
 
-dependencies/database/database.o: dependencies/database/database.c dependencies/database/database.h
-	gcc -c dependencies/database/database.c -o dependencies/database/database.o
+dependencies/database/database.o: dependencies/database/database.c dependencies/database/database.h dependencies/filesystem/filesystem.h
+	gcc -c dependencies/database/database.c -o dependencies/database/database.o 
 	x86_64-w64-mingw32-gcc -c dependencies/database/database.c -o dependencies/database/wdatabase.o
+
+dependencies/filesystem/filesystem.o: dependencies/filesystem/filesystem.c dependencies/filesystem/filesystem.h
+	gcc -c dependencies/filesystem/filesystem.c -o dependencies/filesystem/filesystem.o
+	x86_64-w64-mingw32-gcc -c dependencies/filesystem/filesystem.c -o dependencies/filesystem/wfilesystem.o
 
 dependencies/map/map.o: dependencies/map/map.c dependencies/map/map.h
 	gcc -c dependencies/map/map.c -o dependencies/map/map.o 

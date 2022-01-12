@@ -85,8 +85,8 @@ int checkPath(char path[MAX_PATH_LEN], char beginsWith[MAX_PATH_LEN]);
 /* Allocate space in memory for folderData 
  * 
  * NOTE:
- * variables of type FolderData cannot be properly
- * used without initialization*/
+ * variables of type FolderData cannot be used
+ * properly without initialization*/
 FolderData *initFolder(FolderData *folderData);
 
 /* Checks whether folder has been initialized (correctly) */
@@ -98,8 +98,8 @@ int deallocFolder(FolderData *folderData);
 /* Allocate space in memory for fileData
  * 
  * NOTE:
- * variables of type FileData cannot be properly
- * used without initialization*/
+ * variables of type FileData cannot be used 
+ * properly without initialization*/
 FileData *initFile(FileData *fileData);
 
 /* Checks whether file has been initialized (correctly) */

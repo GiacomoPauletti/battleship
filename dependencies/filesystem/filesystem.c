@@ -1,4 +1,4 @@
-#include "generic.h"
+#include "filesystem.h"
 
 /* INTERNAL USE
  * update paths of parentFolder's subfolders and parentFolder's subfiles.
@@ -146,7 +146,7 @@ FileData * screateFile(char name[MAX_FILE_NAME_LEN], char parentPath[MAX_PATH_LE
         if ( strcat(newFile -> path, PATH_SEPARATOR_S) == NULL ) return NULL;
     if ( strcat(newFile -> path, name) == NULL ) return NULL;
 
-    if ( createFile(&newFile) == 1 ) return newFile;
+    if ( createFile(newFile) == 1 ) return newFile;
     else return NULL;
 }
 
@@ -182,8 +182,6 @@ FolderData *screateFolder(char name[MAX_FILE_NAME_LEN], char parentPath[MAX_PATH
     if ( newFolder -> path[strlen(newFolder -> path) - 1] != PATH_SEPARATOR)
         if ( strcat(newFolder -> path, PATH_SEPARATOR_S) == NULL ) return NULL;
     if ( strcat(newFolder -> path, name) == NULL ) return NULL;
-
-    newFolder -> numFiles = newFolder -> numFolders = NULL;
 
     if ( createFolder(newFolder) == 1 ) return newFolder;
     else return NULL;
