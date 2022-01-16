@@ -14,6 +14,7 @@
 #define CHUNK_SIZE 50
 /* max number of packets with same ID */
 #define MAX_PACKETS 5
+#define MAX_SEND_ATTEMPTS 10
 
 #define SERVER_PORT 5050
 
@@ -90,6 +91,13 @@ typedef struct packetNode
 /* If a single packet is missing (in a packet list) */
 #define MISSING 6
 
+/* if a function fail for a non-specified value, errno is set to OTHER_FAIL and/or 
+ * the function returns OTHER_FAIL */
+#define OTHER_FAIL -2
+/* if a function fail due to protocol (for example Double-Handshake has failed) then
+ * errno is set to PROTOCOL_FAIL and/or the function returns PROTOCOL_FAIL */
+#define PROTOCOL_FAIL -1
+
 /* fills the packet fileds with parameters */
 int fillPacket(DataPacket *packet, int label, int id, int ans_id, int last, int order, char content[CHUNK_SIZE]);
 
@@ -115,3 +123,25 @@ int arePacketsSorted(PacketNode *packets, int order);
 /* Checks whether packets are sequential (ordered and follwing packet order is 
  * current packet order + 1 or -1) */
 int arePacketsSequential(PacketNode *packets);
+
+/* Protocol Accept. Accept client connectionusing the protocol RAA / Double-Handshake:
+ *  - server sends a Request of connection (ROCONN)
+ *  - client answer back with an Acknoledgment (ACK)
+ *  - server answer back again with an Acknowledgment (ACK)
+ * 
+ * RETURN VALUE:
+ * If connection is successfull, 0 is returned.
+ * If accept() failed, OTHER_FAIL is returned and errno is set to OTHER_FAIL
+ * If protocol failed, PROTOCOL_FAIL is returned and errno is set to PROTOCOL_FAIL
+ */
+int paccept(int server_socket, int client_socket, struct sockaddr *client_address);
+
+
+/* Protocol Connect. Connect to server using the protocol RAA / Double-Handshake.
+ * 
+ * RETURN VALUE:
+ * If connection is successfull, 0 is returned.
+ * If connect() failed, OTHER_FAIL is returned and errno is set to OTHER_FAIL
+ * If protocol failed, PROTOCOL_FAIL is returned and errno is set to PROTOCOL_FAIL
+ */
+int pconnect(int local_socket, struct sockaddr *server_address);

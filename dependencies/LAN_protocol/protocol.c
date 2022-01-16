@@ -179,6 +179,146 @@ int arePacketsSequential(PacketNode *packets)
     return 1;
 }
 
+/* Protocol Accept. Accept client connectionusing the protocol RAA / Double-Handshake:
+ *  - server sends a Request of connection (ROCONN)
+ *  - client answer back with an Acknoledgment (ACK)
+ *  - server answer back again with an Acknowledgment (ACK)
+ * 
+ * RETURN VALUE:
+ * If connection is successfull, 0 is returned.
+ * If accept() failed, OTHER_FAIL is returned and errno is set to OTHER_FAIL
+ * If protocol failed, PROTOCOL_FAIL is returned and errno is set to PROTOCOL_FAIL
+ */
+int paccept(int server_socket, int client_socket, struct sockaddr *client_address)
+{
+    int addr_len;
+    int numAttempts;
+
+    DataPacket serverMsg, clientMsg;
+    int currID, clientID;
+
+
+    if ( client_address == NULL ) return OTHER_FAIL;
+    addr_len = sizeof(*client_address);
+
+    do 
+    {
+        errno = 0;
+        client_socket = accept(server_socket, client_address, 
+                            (socklen_t *) &addr_len);
+
+        /* 
+        if ( errno != 0 || client_socket == -1 )
+        {
+            printf("[hostOnlineGame] Server tried to accept client but something went wrong\n");
+
+        } */
+
+    } while ( errno != 0 || client_socket == -1 );
+    
+
+    /* checking if it is possible to communicate with client */
+    numAttempts = 0;
+    do
+    {
+        fillPacket(&serverMsg, ROCONN, currID, NO_ANS_ID, LAST, NO_ORDER, NO_CONTENT);
+
+        send(client_socket, &serverMsg, sizeof(DataPacket), 0);
+        currID++;
+
+        recv(client_socket, &clientMsg, sizeof(DataPacket), 0);
+
+        clientID = clientMsg.id;
+
+        /*
+        if ( clientMsg.label != ACK )
+        {
+            printf("Connection not acknowledged! Trying again\n");
+        }
+        */
+        numAttempts++;
+    } while ( ( clientMsg.label != ACK ) && ( numAttempts < MAX_SEND_ATTEMPTS ) );
+
+
+    if ( numAttempts >= MAX_SEND_ATTEMPTS )
+    {
+        errno = PROTOCOL_FAIL;
+        return PROTOCOL_FAIL;
+    }
+
+    fillPacket(&serverMsg, ACK, currID, clientID, LAST, NO_ORDER, NO_CONTENT);
+
+    send(client_socket, &serverMsg, sizeof(DataPacket), 0);
+    return 0;
+}
+
+/* Protocol Connect. Connect to server using the protocol RAA / Double-Handshake.
+ * 
+ * RETURN VALUE:
+ * If connection is successfull, 0 is returned.
+ * If connect() failed, OTHER_FAIL is returned and errno is set to OTHER_FAIL
+ * If protocol failed, PROTOCOL_FAIL is returned and errno is set to PROTOCOL_FAIL
+ */
+int pconnect(int local_socket, struct sockaddr *server_address)
+{
+    int localSocket;
+    DataPacket serverMsg, localMsg;
+
+    int serverID, currID;
+    int numAttempts;
+    int result;
+
+    /* connecting to the server */
+    errno = 0;
+    result = connect(local_socket, server_address, sizeof(server_address));
+
+    if ( result != 0 || errno != 0 )
+    {
+        printf("Unable to connect to server. Exiting ...\n");
+        errno = OTHER_FAIL;
+        return OTHER_FAIL;
+    }
+
+    /* doing protocol procedures ... */
+    /* 1) server sends a Request for Connection (ROCONN) */
+    numAttempts = 0;
+    do
+    {
+        recv(local_socket, &serverMsg, sizeof(DataPacket), 0);
+        numAttempts++;
+    } while ( ( serverMsg.label != ROCONN ) && ( numAttempts < MAX_SEND_ATTEMPTS ));
+
+    // if no request was found, connection fails
+    if ( numAttempts >= MAX_SEND_ATTEMPTS )
+    {
+        errno = PROTOCOL_FAIL;
+        return PROTOCOL_FAIL;
+    }
+
+    /* 2) client sends an Acknoledgement (ACK) */
+    serverID = serverMsg.id;
+    currID = 1;
+
+    fillPacket(&localMsg, ACK, currID, serverID, LAST, NO_ORDER, NO_CONTENT);
+    send(local_socket, &localMsg, sizeof(DataPacket), 0);
+
+    numAttempts = 0;
+    do 
+    {
+        recv(local_socket, &serverMsg, sizeof(DataPacket), 0);
+        numAttempts++;
+    } while ( ( serverMsg.label != ACK ) && numAttempts < MAX_SEND_ATTEMPTS );
+
+    // if no acknowledgement was found, connection fails 
+    if ( numAttempts >= MAX_SEND_ATTEMPTS )
+    {
+        errno = PROTOCOL_FAIL;
+        return PROTOCOL_FAIL;
+    }
+
+    return 0;
+}
+
 #if defined(DEBUG)
 void printList(PacketNode *head)
 {
