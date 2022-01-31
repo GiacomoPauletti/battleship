@@ -5,19 +5,28 @@
 
 #include <errno.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 #include <unistd.h>
 
 #define MAX_CLIENTS 1
 
 #define CHUNK_SIZE 50
 /* max number of packets with same ID */
+#define PACKET_STR_SIZE (CHUNK_SIZE + 200)
+
 #define MAX_PACKETS 5
+
 #define MAX_SEND_ATTEMPTS 10
 
 #define SERVER_PORT 5050
 
+#define NUM_PACKET_FIELDS 6
 typedef struct dataPacket
 {
     /* label (type of content/packet) of this packet 
@@ -83,13 +92,15 @@ typedef struct packetNode
 
 /* Receiver needs to perform a specific action (description of action in "content") */
 #define ACTION 3
+/* Missing response to ACTION */
+#define REPEAT 4
 /* Receiver confirming that required action was done. If any result has to be sent, 
  * it is written in "content" field. */
-#define ACTION_DONE 4
+#define ACTION_DONE 5
 /* Result sent by receiver as response to ACTION is correct */
-#define CORRECT 5
+#define CORRECT 6
 /* If a single packet is missing (in a packet list) */
-#define MISSING 6
+#define MISSING 7
 
 /* if a function fail for a non-specified value, errno is set to OTHER_FAIL and/or 
  * the function returns OTHER_FAIL */
@@ -101,7 +112,10 @@ typedef struct packetNode
 /* fills the packet fileds with parameters */
 int fillPacket(DataPacket *packet, int label, int id, int ans_id, int last, int order, char content[CHUNK_SIZE]);
 
-int sendPackets(int fd, PacketNode *packets);
+
+int sendPacket(int fd, DataPacket *packets);
+
+int recvPacket(int fd, DataPacket *packets);
 
 PacketNode *recvPackets(int fd, int expected_label, int expected_id, int expected_ans_id);
 

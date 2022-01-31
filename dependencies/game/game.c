@@ -482,3 +482,8 @@ Y8888P'  `Y88P'   `Y88P'  YP  YP  YP");
 
     return isSunk;
 }
+
+int OnlineGameHandler(Player *player1, Player* player2)
+{
+    return 0;        
+}

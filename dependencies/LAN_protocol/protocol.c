@@ -1,6 +1,29 @@
 #include "protocol.h"
 
-static int sortPackets(PacketNode **packets);
+
+/* Converts packet to string */
+int packetToStr(DataPacket *packet, char buffer[sizeof(DataPacket)])
+{
+    int counter;
+    counter = sprintf(buffer, "%d|%d|%d|%d|%d|%s", 
+                packet -> label, packet -> id, packet -> ans_id, packet -> last, 
+                packet -> order, packet -> content);
+
+    //if ( counter != NUM_PACKET_FIELDS ) return -1;
+    return 1;
+}
+
+
+/* Converts string to packet */
+int strToPacket(DataPacket *packet, char buffer[])
+{
+    int counter;
+    counter = sscanf(buffer, "%d|%d|%d|%d|%d|%s",
+                &(packet -> label), &(packet -> id), &(packet -> ans_id), &(packet -> last), 
+                &(packet -> order), packet -> content);
+    //if ( counter != NUM_PACKET_FIELDS ) return -1;
+    return 1;
+}
 
 int fillPacket(DataPacket *packet, int label, int id, int ans_id, int last, int order, char content[CHUNK_SIZE])
 {
@@ -18,6 +41,37 @@ int fillPacket(DataPacket *packet, int label, int id, int ans_id, int last, int 
     return 1;
 }
      
+
+int sendPacket(int fd, DataPacket *packet)
+{
+    char buffer[PACKET_STR_SIZE];
+    int result;
+
+    result = packetToStr(packet, buffer);
+    if ( result != 1 )
+    {
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        printf("Unable to convert packet to string.Exiting...\n");
+        #endif
+        return -1;
+    }
+    printf("[sendPacket] buffer is: %s\n", buffer);
+    send(fd, buffer, PACKET_STR_SIZE, 0);
+
+    return 1;
+}
+
+int recvPacket(int fd, DataPacket *packet)
+{
+    char buffer[PACKET_STR_SIZE];
+    int result;
+
+    recv(fd, buffer, PACKET_STR_SIZE, 0);
+    result = strToPacket(packet, buffer);
+    printf("[recvPacket] buffer is: %s\n", buffer);
+    return result;
+}
+
 /* Receives packets from fd and return them in a dynamic list
  *
  * NOTE:
@@ -31,12 +85,25 @@ PacketNode *recvPackets(int fd, int expected_label, int expected_id, int expecte
     PacketNode *packets, *curNode;    
     PacketNode *others, *othersCursor;
     DataPacket curPacket;
+
+    char buffer[sizeof(DataPacket)];
+    int result;
+
     int counter;
     int foundLast;
 
 
     /* receiving the first packet */
-    recv(fd, &curPacket, sizeof(DataPacket), 0);
+    recv(fd, buffer, sizeof(DataPacket), 0);
+    result = strToPacket(&curPacket, buffer);
+    if ( result != 1 )
+    {
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        printf("Unable to convert string to packet. Exiting...\n");
+        #endif
+    }
+
+
     packets = malloc(sizeof(PacketNode));
     packets -> packet = curPacket;
     packets -> order = curPacket.order;
@@ -62,7 +129,14 @@ PacketNode *recvPackets(int fd, int expected_label, int expected_id, int expecte
     while( (curPacket.id != packets -> packet.id ) || 
            ( foundLast == 1 && arePacketsSequential(packets) != 1 ) )
     {
-        recv(fd, &curPacket, sizeof(DataPacket), 0);
+        recv(fd, buffer, sizeof(DataPacket), 0);
+        result = strToPacket(&curPacket, buffer);
+        if ( result != 1 )
+        {
+            #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+            printf("Unable to convert string to packet. Exiting...\n");
+            #endif
+        }
 
         /* following conditions check if it is this packet is chained with the 
          * first one */
@@ -102,6 +176,7 @@ PacketNode *recvPackets(int fd, int expected_label, int expected_id, int expecte
 
     return packets;
 }
+
 
 /* Sorts Packet list with increasing order */
 int sortPackets(PacketNode **packets)
@@ -199,23 +274,24 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
 
 
     if ( client_address == NULL ) return OTHER_FAIL;
-    addr_len = sizeof(*client_address);
+    addr_len = sizeof(server_socket);
 
     do 
     {
         errno = 0;
         client_socket = accept(server_socket, client_address, 
                             (socklen_t *) &addr_len);
-
-        /* 
+        printf("errno is: %d\n", errno);
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         if ( errno != 0 || client_socket == -1 )
         {
             printf("[hostOnlineGame] Server tried to accept client but something went wrong\n");
 
-        } */
+        } 
+        #endif
 
     } while ( errno != 0 || client_socket == -1 );
-    
+    printf("Out of accept loop\n");
 
     /* checking if it is possible to communicate with client */
     numAttempts = 0;
@@ -223,32 +299,36 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
     {
         fillPacket(&serverMsg, ROCONN, currID, NO_ANS_ID, LAST, NO_ORDER, NO_CONTENT);
 
-        send(client_socket, &serverMsg, sizeof(DataPacket), 0);
+        printf("[Sending ROCONN] Sending...\n");
+        sendPacket(client_socket, &serverMsg);
         currID++;
-
-        recv(client_socket, &clientMsg, sizeof(DataPacket), 0);
+        printf("[Waiting for ACK] ROCONN sent, waiting for ACK\n");
+        recvPacket(client_socket, &clientMsg);
 
         clientID = clientMsg.id;
 
-        /*
+        //#if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         if ( clientMsg.label != ACK )
         {
-            printf("Connection not acknowledged! Trying again\n");
+            printf("[Waiting for ACK] Connection not acknowledged! Trying again\n");
         }
-        */
+        //#endif
         numAttempts++;
     } while ( ( clientMsg.label != ACK ) && ( numAttempts < MAX_SEND_ATTEMPTS ) );
 
 
     if ( numAttempts >= MAX_SEND_ATTEMPTS )
     {
+        //#if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        printf("[Waiting for ACK] No acknowledge received from client!");
+        //#endif
         errno = PROTOCOL_FAIL;
         return PROTOCOL_FAIL;
-    }
+    }else printf("[Waiting for ACK] ACK found\n");
 
     fillPacket(&serverMsg, ACK, currID, clientID, LAST, NO_ORDER, NO_CONTENT);
 
-    send(client_socket, &serverMsg, sizeof(DataPacket), 0);
+    sendPacket(client_socket, &serverMsg);
     return 0;
 }
 
@@ -263,6 +343,7 @@ int pconnect(int local_socket, struct sockaddr *server_address)
 {
     int localSocket;
     DataPacket serverMsg, localMsg;
+    char buffer[15];
 
     int serverID, currID;
     int numAttempts;
@@ -270,56 +351,70 @@ int pconnect(int local_socket, struct sockaddr *server_address)
 
     /* connecting to the server */
     errno = 0;
-    result = connect(local_socket, server_address, sizeof(server_address));
+    result = connect(local_socket, server_address, sizeof(struct sockaddr_in));
 
     if ( result != 0 || errno != 0 )
     {
         printf("Unable to connect to server. Exiting ...\n");
+
         errno = OTHER_FAIL;
         return OTHER_FAIL;
-    }
+    } else printf("Connected!\n");
 
     /* doing protocol procedures ... */
     /* 1) server sends a Request for Connection (ROCONN) */
     numAttempts = 0;
     do
     {
-        recv(local_socket, &serverMsg, sizeof(DataPacket), 0);
+        printf("[Waiting for ROCONN] Waiting...!\n");
+        recvPacket(local_socket, &serverMsg);
         numAttempts++;
+        printf("[Waiting for ROCONN] Packet received!\n");
     } while ( ( serverMsg.label != ROCONN ) && ( numAttempts < MAX_SEND_ATTEMPTS ));
 
     // if no request was found, connection fails
     if ( numAttempts >= MAX_SEND_ATTEMPTS )
     {
+        //#if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        printf("[Wating for ROCONN] No request received from server\n");
+        //#endif
+
         errno = PROTOCOL_FAIL;
         return PROTOCOL_FAIL;
-    }
+    } else printf("[Waiting for ROCONN] Right packet found\n");
 
     /* 2) client sends an Acknoledgement (ACK) */
     serverID = serverMsg.id;
     currID = 1;
 
     fillPacket(&localMsg, ACK, currID, serverID, LAST, NO_ORDER, NO_CONTENT);
-    send(local_socket, &localMsg, sizeof(DataPacket), 0);
+    sendPacket(local_socket, &localMsg);
 
     numAttempts = 0;
     do 
     {
-        recv(local_socket, &serverMsg, sizeof(DataPacket), 0);
+        recvPacket(local_socket, &serverMsg);
         numAttempts++;
+        printf("[Waiting for ACK] Packet received\n");
     } while ( ( serverMsg.label != ACK ) && numAttempts < MAX_SEND_ATTEMPTS );
 
     // if no acknowledgement was found, connection fails 
     if ( numAttempts >= MAX_SEND_ATTEMPTS )
     {
+        //#if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        printf("[Waiting for ACK] No acknowledgement received from server\n");
+        //#endif
+
         errno = PROTOCOL_FAIL;
         return PROTOCOL_FAIL;
-    }
+    } else printf("[Waiting for ACK] Right packet found\n");
 
     return 0;
 }
 
-#if defined(DEBUG)
+
+
+#if 0 //defined(DEBUG)
 void printList(PacketNode *head)
 {
         while ( head != NULL)

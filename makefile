@@ -1,6 +1,6 @@
-main: main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o dependencies/filesystem/filesystem.o
-	gcc -o main main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o dependencies/filesystem/filesystem.o
-	x86_64-w64-mingw32-gcc -lerrno.h -ldirect.h -o wmain.exe wmain.o dependencies/common/wcommon.o dependencies/game/wgame.o dependencies/map/wmap.o dependencies/menu/wmenu.o dependencies/ship/wship.o dependencies/database/wdatabase.o dependencies/filesystem/filesystem.o
+main: main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o dependencies/filesystem/filesystem.o dependencies/LAN_protocol/protocol.o
+	gcc -o main main.o dependencies/common/common.o dependencies/game/game.o dependencies/map/map.o dependencies/menu/menu.o dependencies/ship/ship.o dependencies/database/database.o dependencies/filesystem/filesystem.o dependencies/LAN_protocol/protocol.o
+	x86_64-w64-mingw32-gcc -lerrno.h -ldirect.h -o wmain.exe wmain.o dependencies/common/wcommon.o dependencies/game/wgame.o dependencies/map/wmap.o dependencies/menu/wmenu.o dependencies/ship/wship.o dependencies/database/wdatabase.o dependencies/filesystem/wfilesystem.o dependencies/LAN_protocol/wprotocol.o
 
 #problem with linking (and finding) errno (and maybe also direct) headers
 
@@ -9,7 +9,7 @@ main.o: main.c dependencies/common/common.h dependencies/game/game.h dependencie
 	x86_64-w64-mingw32-gcc -c main.c -o wmain.o
 
 # maybe adding down here: dependencies/map/map.h dependencies/ship/ship.h dependencies/common/common.h
-dependencies/menu/menu.o: dependencies/menu/menu.c dependencies/menu/menu.h dependencies/database/database.h
+dependencies/menu/menu.o: dependencies/menu/menu.c dependencies/menu/menu.h dependencies/database/database.h dependencies/LAN_protocol/protocol.h
 	gcc -c dependencies/menu/menu.c -o dependencies/menu/menu.o
 	x86_64-w64-mingw32-gcc -c dependencies/menu/menu.c -o dependencies/menu/wmenu.o
 
@@ -39,3 +39,7 @@ dependencies/filesystem/filesystem.o: dependencies/filesystem/filesystem.c depen
 dependencies/map/map.o: dependencies/map/map.c dependencies/map/map.h
 	gcc -c dependencies/map/map.c -o dependencies/map/map.o 
 	x86_64-w64-mingw32-gcc -c dependencies/map/map.c -o dependencies/map/wmap.o 
+
+dependencies/LAN_protocol/protocol.o: dependencies/LAN_protocol/protocol.c  dependencies/LAN_protocol/protocol.h
+	gcc -c dependencies/LAN_protocol/protocol.c -o dependencies/LAN_protocol/protocol.o
+	x86_64-w64-mingw32-gcc -lws2_32 -c dependencies/LAN_protocol/protocol.c -o  dependencies/LAN_protocol/wprotocol.o

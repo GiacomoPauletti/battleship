@@ -16,7 +16,7 @@ int main()
 
     clearScreen();
 
-    (void) createDatabase();
+    (void) createDatabase(1);
     /* creating database, if not done yet */
 
     mainMenu( (MenuData) {});
