@@ -25,6 +25,7 @@
 #define MAX_SEND_ATTEMPTS 10
 
 #define SERVER_PORT 5050
+#define CLIENT_PORT 5070
 
 #define NUM_PACKET_FIELDS 6
 typedef struct dataPacket

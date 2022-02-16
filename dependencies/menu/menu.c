@@ -520,10 +520,16 @@ int playGuestLAN(MenuData data)
 
     int local_socket;
     int addr_len = sizeof(local_socket);
-    struct sockaddr_in server_address;
+    struct sockaddr_in server_address, client_address;
     int result;
 
     local_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+    client_address.sin_family = AF_INET;
+    client_address.sin_port = htons(CLIENT_PORT);
+    client_address.sin_addr.s_addr = INADDR_ANY;
+
+    bind(local_socket, (struct sockaddr *) &client_address, sizeof(client_address));
 
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(SERVER_PORT);

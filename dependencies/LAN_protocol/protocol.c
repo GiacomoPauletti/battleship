@@ -281,7 +281,6 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
         errno = 0;
         client_socket = accept(server_socket, client_address, 
                             (socklen_t *) &addr_len);
-        printf("errno is: %d\n", errno);
         #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         if ( errno != 0 || client_socket == -1 )
         {
@@ -460,3 +459,5 @@ int main()
     return 0;
 }
 #endif
+
+
