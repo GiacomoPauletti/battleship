@@ -1,5 +1,7 @@
 #include "game.h"
 
+Coordinate placeBomb(Player *player);
+
 void playerArmySetup(Player* player, Army gameArmy)
 {
     int playerDone;
@@ -24,6 +26,8 @@ void playerArmySetup(Player* player, Army gameArmy)
     int curLength, curShipCounter;
     /* used in "case 'i'" */
     int rowCursor, colCursor;
+
+    char buffer[400];
 
     player -> shipNumber = gameArmy.shipNum;
 
@@ -215,15 +219,17 @@ void playerArmySetup(Player* player, Army gameArmy)
         if ( input == 'i' )
         {
             clearScreen();
-            printf("HOW TO PLACE:\n"
-                "\t[0 ... %d]: select the corresponding ship\n"
-                "\t[w,a,s,d]: move selected ship around the map\n"
-                "\t[r]: rotate the ship \n"
-                "\t[-]: remove ship form map \n", gameArmy.shipNum);
+            sprintf(buffer, "HOW TO PLACE:\n"
+                "[0 ... %d]: select the corresponding ship\n"
+                "[w,a,s,d]: move selected ship around the map\n"
+                "[r]: rotate the ship\n"
+                "[-]: remove ship form map\n", gameArmy.shipNum);
+            MultiPrintCenter(buffer);
 
-            printf("If something goes wrong and you want to kill the program, use ctrl + C\n");
+            printCenter("If something goes wrong and you want to kill the program, use ctrl + C\n");
             printf("\n\n\n");
 
+            /*
             printf("These are the ships you can place: \n");
             curLength = gameArmy.ships[0].length;
             curShipCounter = 1;
@@ -236,9 +242,10 @@ void playerArmySetup(Player* player, Army gameArmy)
                     curShipCounter = 0;
                 }
             }
+            */
 
             printf("\n\n");
-            printf("When done press 'k' and then enter...");
+            printCenter("When done press 'k' and then enter...\n");
             while ( getch_() != 'k' );
 
         }
@@ -246,18 +253,64 @@ void playerArmySetup(Player* player, Army gameArmy)
         
     } // end of while [ while( playerDone == 0 ) ]
 
+    clearScreen();
+    printf("\n\n");
+    printCenter("When done press 'k' and then enter...\n");
+    while ( getch_() != 'k' );
 }
 
 int localGameHandler(Player *player1, Player *player2)
 {
-    MapWrap *curMap;
-    /* current map opened by the player. Can be either attack map or defence map. */
     Coordinate cursor;
     /* cursor used by the user to place the bomb */
-    char tempSymbol;
-    /* temporary symbol unplaced by the cursor */
-    int playerDone;
-    /* when the player is done and selected the spot where to place the bomb */
+    int shipCursor;
+    /* used to iterate through player2 ships */
+    int pointCursor;
+    /* used to iterate through player2 ship points */
+    int found, isSunk, result;
+
+    cursor = placeBomb(player1);
+
+
+    clearScreen();
+    printf("\n\n");
+    result = isShipHitted(player2, cursor);
+    if ( getFromMap(player1 -> attackMap, cursor) == HIT_SHIP_CHAR )
+    {
+        printCenter("You already hitted this!!\n");
+    }
+    else if ( result >= 1 )
+    {
+        MultiPrintCenter("\
+d8888b.  .d88b.   .d88b.  .88b  d88. \n\
+88  `8D .8P  Y8. .8P  Y8. 88'YbdP`88 \n\
+88oooY' 88    88 88    88 88  88  88 \n\
+88~~~b. 88    88 88    88 88  88  88 \n\
+88   8D `8b  d8' `8b  d8' 88  88  88 \n\
+Y8888P'  `Y88P'   `Y88P'  YP  YP  YP");
+        printf("\n\n\n");
+
+        if ( result == 1 )
+            printCenter("You HITTED a ship\n");
+        else if ( result == 2 )
+            printCenter("You HITTED and SUNK a ship\n");
+
+        addToMap(&(player1 -> attackMap), cursor, HIT_SHIP_CHAR);
+    }
+
+    printf("\n\n");
+    printCenter("When done press 'k' and then enter...");
+    while( getch_() != 'k' );
+    fflush(stdin);
+
+    return isSunk;
+}
+
+// host is attacking 
+int hostGameHandler(Player *attacker, Player *defender)
+{
+    Coordinate cursor;
+    /* cursor used by the user to place the bomb */
     int shipCursor;
     /* used to iterate through player2 ships */
     int pointCursor;
@@ -267,11 +320,378 @@ int localGameHandler(Player *player1, Player *player2)
     char input;
     /* player input */
 
-    curMap = &(player1 -> attackMap);
+    DataPacket serverMsg, clientMsg;
+    char bombCoords[CHUNK_SIZE];
+    char attackResult1[CHUNK_SIZE], attackResult2[CHUNK_SIZE];
+    int currID;
+    currID = 0;
+
+    // placing the bomb
+    printf("%s, it's your turn: \n", attacker -> name);
+    cursor = placeBomb(attacker);
+
+    // asking guest for attack result
+    sprintf(bombCoords, "%d,%d", cursor.x, cursor.y);
+    fillPacket(&serverMsg, ACTION, currID, NO_ANS_ID, LAST, NO_ORDER, bombCoords);
+    sendPacket(gclient_socket, &serverMsg);
+
+    recvPacket(gclient_socket, &clientMsg);
+    sscanf(clientMsg.content, "%s %s", attackResult1, attackResult2);
+
+    clearScreen();
+    isSunk = 0;
+    if ( strcmp(attackResult1, "hitted") == 0 )
+    {
+        if ( getFromMap(attacker -> attackMap, cursor) == HIT_SHIP_CHAR )
+        {
+
+            printCenter("You already hitted this!!");
+        }
+        else // if hitted ship has not been hitted there yet
+        {
+
+            MultiPrintCenter("\
+    d8888b.  .d88b.   .d88b.  .88b  d88. \n\
+    88  `8D .8P  Y8. .8P  Y8. 88'YbdP`88 \n\
+    88oooY' 88    88 88    88 88  88  88 \n\
+    88~~~b. 88    88 88    88 88  88  88 \n\
+    88   8D `8b  d8' `8b  d8' 88  88  88 \n\
+    Y8888P'  `Y88P'   `Y88P'  YP  YP  YP");
+            printf("\n\n\n");
+
+            if ( strcmp(attackResult2, "sunk") == 0 )
+            {
+                printCenter("SHIP HITTED and SUNK\n");
+                isSunk = 1;
+            }
+            else printCenter("SHIP HITTED but nothing else\n");
+        }
+
+        addToMap(&(attacker -> attackMap), cursor, HIT_SHIP_CHAR);
+    }
+    else
+    {
+        printCenter("YOU HITTED WATER\n");
+    }
+
+    return isSunk;
+}
+
+/* Used to handle guest attack in LAN match. 
+ * Runs on host machine. */
+int guestGameHandler(Player *onlinePlayer, Player *localPlayer)
+{
+
+    Coordinate cursor;
+    /* cursor used by the user to place the bomb */
+    int shipCursor;
+    /* used to iterate through player2 ships */
+    int pointCursor;
+    /* used to iterate through player2 ship points */
+    int found, isSunk;
+    /* contains information about attack result.
+     * Format: hitted/already_hitted/water sunk/not_sunk/_
+     * Second column used only if first option is hitted, otherwise its content
+     * is _ 
+     */
+    char attackResult[CHUNK_SIZE];
+    char buffer[300];
+
+    int result;
+    int to_repeat;
+    /* if the communication with server failed */
+
+    DataPacket serverMsg, clientMsg;
+    int currID;
+    currID = 0;
+
+    do 
+    {
+        to_repeat = 0;
+        // asking player to place the bomb
+        fillPacket(&serverMsg, ACTION, currID, NO_ANS_ID, LAST, NO_ORDER, "place the bomb");
+        sendPacket(gclient_socket, &serverMsg);
+
+        // player placed the bomb at given coordinates
+        // coordinates given with the following format:
+        //  x,y
+        recvPacket(gclient_socket, &clientMsg);
+
+        if ( clientMsg.label == ACTION_DONE )
+        {
+            if ( sscanf(clientMsg.content, "%d,%d", &(cursor.x), &(cursor.y)) != 2 )
+            {
+                printf("Invalid coordinates\n");
+                to_repeat = 1;
+                exit(1);
+            }
+            else
+            {
+
+                printf("\n\n");
+
+                //checking attack result  
+                isSunk = 0;
+                result = isShipHitted(localPlayer, cursor);
+                if ( result == 0 )
+                {
+                    strcpy(attackResult, "water _");
+                
+                    printCenter("Enemy hitted water\n");
+                }
+                else if ( result == 1 )
+                {
+                    strcpy(attackResult, "hitted not_sunk");
+
+                    addToMap(&(onlinePlayer -> attackMap), cursor, HIT_SHIP_CHAR);
+
+                    sprintf(buffer, "Enemy hitted your ship at (%d,%d)\n", cursor.x, cursor.y);
+                    printCenter(buffer);
+                } 
+                else if ( result == 2 )
+                {
+                    strcpy(attackResult, "hitted sunk");
+
+                    addToMap(&(onlinePlayer -> attackMap), cursor, HIT_SHIP_CHAR);
+
+                    sprintf(buffer, "Enemy hitted and sunk your ship at (%d,%d)\n", cursor.x, cursor.y);
+                    printCenter(buffer);
+                }
+
+            } 
+
+            // sending attack results to client
+            fillPacket(&serverMsg, CORRECT, currID, clientMsg.ans_id, LAST, NO_ORDER, 
+                        attackResult);
+            currID++;
+            sendPacket(gclient_socket, &serverMsg);
+
+        }
+        else //if not clientMsg.label == ACTION_DONE
+            to_repeat = 1;
+
+    } while ( to_repeat == 1 );
+
+
+    return isSunk;
+}
+
+/* Used to handle client side the game actions. 
+ * Runs on guest machine. */
+int localGuestGameHandler(Player *localPlayer, Player *oppPlayer)
+{
+    int gameEnded;
+    /* if game ends, the function terminates */
+
+    int shipCursor, pointCursor;
+    /* used to iterate through ships and ship points */
+    int result;
+
+    int to_repeat;
+
+    DataPacket serverMsg, localMsg;
+    /* used to communicate with server */
+
+    Coordinate cursor;
+    /* contains coordinates of bomb (for both host and local player, one at time) */
+
+    char bombResult[CHUNK_SIZE];
+    char attackResult1[CHUNK_SIZE];
+    char attackResult2[CHUNK_SIZE];
+    char buffer[300];
+    /* used to format strings and handle results properly */
+
+    int currID;
+    /* pacekt ids */
+    currID = 0;
+
+    clearScreen();
+
+    gameEnded = 0;  
+    while ( gameEnded == 0 )
+    {
+
+        printCenter("Waiting for opponent to attack...");
+        
+        /* packets should be as follow:
+         *  1) ACTION (from host) which is attacking
+         *  2) ACTION_DONE (from guest) telling attack results
+         *  3) ACTION (from host) asking guest to attack
+         *  4) ACTION_DONE (from guest) saying bomb coordinates
+         *  5) CORRECT (from host) telling attack results
+         * 
+         * If game ends ACTION messages are replaced by EOC and in message 
+         * content there is written the winner */
+
+
+        // local player is defending
+        do
+        {
+            // 1) ACTION
+            recvPacket(glocal_socket, &serverMsg);
+
+            // if game ended
+            if ( serverMsg.label == EOC )
+            {
+                clearScreen();
+                printf("\n\n");
+                if ( strcmp(serverMsg.content, "guest win") == 0 )
+                {
+                    gameWinWriting();
+                }
+                else
+                {
+                    gameLostWriting();
+                }
+                
+                gameEnded = 1;
+                break;
+            }
+
+        } while ( serverMsg.label != ACTION );
+        // packets that are different from ACTION or EOC are ignored 
+        
+        // exiting from loop if game ended
+        if ( gameEnded == 1 ) break;
+
+        // checking whether host hitted (and/or sunk) a ship or not
+        clearScreen();
+        printf("\n\n");
+        sscanf(serverMsg.content, "%d,%d", &(cursor.x), &(cursor.y));
+        result = isShipHitted(localPlayer, cursor);
+        if ( result == 0 )
+        // hitted water
+        {
+            fillPacket(&localMsg, ACTION_DONE, currID, serverMsg.id, LAST, 
+            NO_ORDER, "water _");
+
+            printCenter("Enemy hitted WATER\n");
+        }
+        else if ( result == 1 )
+        // hitted ship but not sunk
+        {
+            fillPacket(&localMsg, ACTION_DONE, currID, serverMsg.id, LAST, 
+            NO_ORDER, "hitted not_sunk");
+            addToMap(&(localPlayer -> defenceMap), cursor, HIT_SHIP_CHAR);
+
+            sprintf(buffer, "Enemy HITTED your ship at (%d,%d)\n", cursor.x, cursor.y);
+            printCenter(buffer);
+        }
+        else if ( result == 2 )
+        // hitted and sunk ship
+        {
+            fillPacket(&localMsg, ACTION_DONE, currID, serverMsg.id, LAST, 
+            NO_ORDER, "hitted sunk");
+            addToMap(&(localPlayer -> defenceMap), cursor, HIT_SHIP_CHAR);
+
+            sprintf(buffer, "Enemy HITTED and SUNK your ship at (%d,%d)\n", cursor.x, cursor.y);
+            printCenter(buffer);
+        }
+
+
+        // 2) ACTION_DONE
+        sendPacket(glocal_socket, &localMsg);
+        currID++;
+
+        printf("\n\n\n\n");
+        printCenter("When done press 'k' and then enter...");
+        printf("\n");
+        while ( getch_() != 'k' );
+
+        //local player is attacking
+        do
+        {
+
+            // 3) ACTION
+            recvPacket(glocal_socket, &serverMsg);
+
+            // if game ended, EOC is received
+            if ( serverMsg.label == EOC )
+            {
+                clearScreen();
+                printf("\n\n");
+                if ( strcmp(serverMsg.content, "guest win") == 0 )
+                    gameWinWriting();
+                else 
+                    gameLostWriting();
+                                
+                gameEnded = 1;
+                break;
+            }
+
+        } while ( serverMsg.label != ACTION );
+
+        if ( gameEnded == 1 ) break;
+
+        clearScreen();
+        printf("%s, it's your turn: \n", localPlayer -> name);
+
+        // player places the bomb
+        cursor = placeBomb(localPlayer);
+        sprintf(bombResult, "%d,%d", cursor.x, cursor.y);
+        fillPacket(&localMsg, ACTION_DONE, currID, serverMsg.ans_id, LAST, NO_ORDER, bombResult);
+
+        // 4) ACTION_DONE
+        sendPacket(glocal_socket, &localMsg);
+        currID++;
+
+        do
+        {
+            // 5) CORRECT 
+            recvPacket(glocal_socket, &serverMsg);
+        } while ( serverMsg.label != CORRECT );
+
+        clearScreen();
+        sscanf(serverMsg.content, "%s %s", attackResult1, attackResult2);
+
+        if ( strcmp(attackResult1, "hitted") == 0 )
+        // ship hitted
+        {
+            
+            MultiPrintCenter("\
+    d8888b.  .d88b.   .d88b.  .88b  d88. \n\
+    88  `8D .8P  Y8. .8P  Y8. 88'YbdP`88 \n\
+    88oooY' 88    88 88    88 88  88  88 \n\
+    88~~~b. 88    88 88    88 88  88  88 \n\
+    88   8D `8b  d8' `8b  d8' 88  88  88 \n\
+    Y8888P'  `Y88P'   `Y88P'  YP  YP  YP");
+            printf("\n\n\n");
+
+            if ( strcmp(attackResult2, "sunk") == 0 )
+            // ship sunk
+            {
+                printCenter("SHIP HITTED and SUNK\n");
+            } else printCenter("SHIP HITTED but nothing else\n");
+
+            addToMap(&(localPlayer -> attackMap), cursor, HIT_SHIP_CHAR);
+        } 
+        else // water hitted
+        {
+            printCenter("YOU HITTED WATER\n");
+        }
+        printf("\n\n\n");
+
+    }
+
+    return 0;
+}
+
+/* Used to make player place the bomb
+ * RETURN VALUE:
+ * returns where the bomb has been placed
+ */
+Coordinate placeBomb(Player *player)
+{
+    MapWrap *curMap;
+    Coordinate cursor;
+    char tempSymbol, input;
+    int playerDone;
+
+    curMap = &(player -> attackMap);
     /* default current map */
 
-    cursor.x = player1 -> attackMap.dims.x / 2; 
-    cursor.y = player1 -> attackMap.dims.y / 2;
+    cursor.x = player -> attackMap.dims.x / 2; 
+    cursor.y = player -> attackMap.dims.y / 2;
     /* initial default coordinates of cursor */
 
     tempSymbol = getFromMap(*curMap, cursor);
@@ -290,18 +710,18 @@ int localGameHandler(Player *player1, Player *player2)
         #endif
 
         printf("\n\n");
-        if (curMap == &(player1 -> attackMap))
+        if (curMap == &(player -> attackMap))
             printCenter("ATTACK MAP");
         else
             printCenter("DEFENCE MAP");
 
         printMap(*curMap);
-        printf("[%s] Type 'i' for help and information on the game\n", player1 -> name);
+        printf("[%s] Type 'i' for help and information on the game\n", player -> name);
     
 
         input = getch_();
 
-        if ( curMap == &(player1 -> attackMap) )
+        if ( curMap == &(player -> attackMap) )
         {
             switch (input)
             {
@@ -324,7 +744,7 @@ int localGameHandler(Player *player1, Player *player2)
                     break;
 
                 case 'd':
-                    if (cursor.x + 1 < player1 -> attackMap.dims.x)
+                    if (cursor.x + 1 < player -> attackMap.dims.x)
                     {
                         addToMap(curMap, cursor, tempSymbol);
 
@@ -337,7 +757,7 @@ int localGameHandler(Player *player1, Player *player2)
                     break;
 
                 case 's':
-                    if (cursor.y + 1 < player1 -> attackMap.dims.y)
+                    if (cursor.y + 1 < player -> attackMap.dims.y)
                     {
                         addToMap(curMap, cursor, tempSymbol);
 
@@ -363,8 +783,11 @@ int localGameHandler(Player *player1, Player *player2)
                     break;
 
                 case 'k':
-                    addToMap(curMap, cursor, tempSymbol);
-                    playerDone = 1;
+                    if ( getFromMap(*curMap, cursor) != HIT_SHIP_CHAR )
+                    {
+                        addToMap(curMap, cursor, tempSymbol);
+                        playerDone = 1;
+                    }
                     break;
 
                 case 'i':
@@ -381,7 +804,7 @@ int localGameHandler(Player *player1, Player *player2)
                     break;
 
                 case 'm':
-                    curMap = &(player1 -> defenceMap);
+                    curMap = &(player -> defenceMap);
                     break;
 
                 default:
@@ -389,7 +812,7 @@ int localGameHandler(Player *player1, Player *player2)
             }
 
         } // end of "if ( curMap == &(player1 -> attackMap) )"            
-        else
+        else // if defence map is selected
         {
             switch (input)
             {
@@ -405,7 +828,7 @@ int localGameHandler(Player *player1, Player *player2)
                     while ( getch_() != 'k' );
                     break;
                 case 'm':
-                    curMap = &(player1 -> attackMap);
+                    curMap = &(player -> attackMap);
                     break;
                 
                 default:
@@ -414,76 +837,58 @@ int localGameHandler(Player *player1, Player *player2)
         }
 
     } // end of "while ( playerDone == 0)"
-    
-    clearScreen();
-    if ( ( player2 -> defenceMap.map[cursor.y][cursor.x] == SAFE_SHIP_CHAR ) && 
-         ( player1 -> attackMap.map[cursor.y][cursor.x] != HIT_SHIP_CHAR ) &&
-         ( player1 -> attackMap.map[cursor.y][cursor.x] != WATER_CHAR ) )
+
+    return cursor;
+}
+
+/* checks whether any ship placed by player is hitted.
+/* RETURN VALUE:
+ *      - 0 if hitted water
+ *      - 1 if hitted ship but not sunk
+ *      - 2 if hitted ship and sunk
+*/
+int isShipHitted(Player *player, Coordinate point)
+{
+
+    int isSunk;
+    int found, shipCursor, pointCursor;
+    found = 0;
+
+    if ( player -> defenceMap.map[point.y][point.x] == SAFE_SHIP_CHAR ||
+        player -> defenceMap.map[point.y][point.x] == HIT_SHIP_CHAR )
     {
-        //printCenter("BOOOOM");
-        printf("\n");
-        MultiPrintCenter("\
-d8888b.  .d88b.   .d88b.  .88b  d88. \n\
-88  `8D .8P  Y8. .8P  Y8. 88'YbdP`88 \n\
-88oooY' 88    88 88    88 88  88  88 \n\
-88~~~b. 88    88 88    88 88  88  88 \n\
-88   8D `8b  d8' `8b  d8' 88  88  88 \n\
-Y8888P'  `Y88P'   `Y88P'  YP  YP  YP");
-        printf("\n\n");
-        printCenter("SHIP HITTED AND ...\n");
-
-        addToMap(&(player1 -> attackMap), cursor, HIT_SHIP_CHAR);
-
-        isSunk = 0;
-        found = 0;
-        for ( shipCursor = 0; found == 0 && shipCursor < player2 -> shipNumber; shipCursor++ )
+        // checking if ship is sunk and updating ships
+        for ( shipCursor = 0; found == 0 && shipCursor < player -> shipNumber; shipCursor++ )
         {
-            
-            for ( pointCursor = 0; found == 0 && pointCursor < player2 -> ships[shipCursor].length; pointCursor++ )
+            for ( pointCursor = 0; found == 0 && pointCursor < player -> ships[shipCursor].length; pointCursor++ )
             {
                 #if defined(DEBUG_GAME) || defined(DEBUG_ALL)
-                printf("%d | %d\n", player2 -> ships[shipCursor].points[pointCursor].x, cursor.x);
-                printf("%d | %d\n", player2 -> ships[shipCursor].points[pointCursor].y, cursor.y);
+                printf("%d | %d\n", player -> ships[shipCursor].points[pointCursor].x, cursor.x);
+                printf("%d | %d\n", player -> ships[shipCursor].points[pointCursor].y, cursor.y);
                 #endif
                 
-                if ( (player2 -> ships[shipCursor].points[pointCursor].x == cursor.x) && 
-                     (player2 -> ships[shipCursor].points[pointCursor].y == cursor.y) )
-                     {
+                // current ship is the hitted one
+                if ( ( player -> ships[shipCursor].points[pointCursor].x == point.x) && 
+                    ( player -> ships[shipCursor].points[pointCursor].y == point.y) )
+                    {
                         #if defined(DEBUG_GAME) || defined(DEBUG_ALL)
                         printf("FOUND, before updating, hitCounter is: %d\n", player2 -> ships[shipCursor].hitCounter);
                         #endif
 
                         found = 1;
-                        player2 -> ships[shipCursor].hitCounter++;
+                        player -> ships[shipCursor].hitCounter++;
                         
-                        if ( player2 -> ships[shipCursor].hitCounter == player2 -> ships[shipCursor].length )
+                        if ( player -> ships[shipCursor].hitCounter == player -> ships[shipCursor].length )
+                        // ship is sunk
                         {
-                            printCenter(" ... SHIP HAS BEEN SUNK!!");
-                            isSunk = 1;
+                            return 2;
                         }
 
-                     }
+                    }
             }
         }
-        if (!isSunk) printCenter("... unfortunately nothing else\n");
-    } // end of "ship hit if statement" [if ( player2 -> defenceMap.map[cursor.y][cursor.x] == SAFE_SHIP_CHAR )]
-    else if ( player1 -> attackMap.map[cursor.y][cursor.x] == HIT_SHIP_CHAR )
-        printCenter("You already hitted this!!");
-    else
-    {
-        printCenter("Nope! You hitted water.\n");
-        player1 -> attackMap.map[cursor.y][cursor.x] = WATER_CHAR;
+        return 1;
     }
 
-    printf("\n\n");
-    printCenter("When done press 'k' and then enter...");
-    while( getch_() != 'k' );
-    fflush(stdin);
-
-    return isSunk;
-}
-
-int OnlineGameHandler(Player *player1, Player* player2)
-{
-    return 0;        
+    return 0;
 }

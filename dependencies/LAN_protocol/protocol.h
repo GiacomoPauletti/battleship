@@ -1,3 +1,6 @@
+#if !defined(PROTOCOL_H)
+#define PROTOCOL_H 0
+
 #include <stdio.h>
 
 #include <stdlib.h>
@@ -16,16 +19,20 @@
 
 #define MAX_CLIENTS 1
 
-#define CHUNK_SIZE 50
+#define CHUNK_SIZE 200
 /* max number of packets with same ID */
-#define PACKET_STR_SIZE (CHUNK_SIZE + 200)
+#define PACKET_STR_SIZE (CHUNK_SIZE + sizeof(int) * 5 + 10 )
 
 #define MAX_PACKETS 5
 
 #define MAX_SEND_ATTEMPTS 10
 
-#define SERVER_PORT 5050
-#define CLIENT_PORT 5070
+#define SERVER_PORT 5000
+#define CLIENT_PORT 5040
+
+int gserver_socket;
+int gclient_socket;
+int glocal_socket;
 
 #define NUM_PACKET_FIELDS 6
 typedef struct dataPacket
@@ -103,6 +110,7 @@ typedef struct packetNode
 /* If a single packet is missing (in a packet list) */
 #define MISSING 7
 
+#define TEST 8
 /* if a function fail for a non-specified value, errno is set to OTHER_FAIL and/or 
  * the function returns OTHER_FAIL */
 #define OTHER_FAIL -2
@@ -149,7 +157,7 @@ int arePacketsSequential(PacketNode *packets);
  * If accept() failed, OTHER_FAIL is returned and errno is set to OTHER_FAIL
  * If protocol failed, PROTOCOL_FAIL is returned and errno is set to PROTOCOL_FAIL
  */
-int paccept(int server_socket, int client_socket, struct sockaddr *client_address);
+int paccept(int server_socket, int *client_socket, struct sockaddr *client_address);
 
 
 /* Protocol Connect. Connect to server using the protocol RAA / Double-Handshake.
@@ -160,3 +168,5 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
  * If protocol failed, PROTOCOL_FAIL is returned and errno is set to PROTOCOL_FAIL
  */
 int pconnect(int local_socket, struct sockaddr *server_address);
+
+#endif

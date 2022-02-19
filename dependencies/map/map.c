@@ -44,7 +44,7 @@ void printMap(MapWrap map)
     int cursorX, cursorY;
     for (cursorY = 0; cursorY < map.dims.y; cursorY++)
     {
-        printf("\n\n\n\t\t\t");
+        printf("\n\n\n\t\t\t\t");
         for (cursorX = 0; cursorX < map.dims.x; cursorX++)
         {
             printf("      %c", map.map[cursorY][cursorX]);  //might be changed to getFromMap

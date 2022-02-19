@@ -14,6 +14,7 @@ int clearScreen()
     #else
     system("cls");
     #endif
+    return 0;
 }
 
 char getch_()
@@ -100,5 +101,30 @@ void filterNewLine(char string[])
     }
 
     string[cursorB] = '\0';
+
+}
+
+void gameWinWriting()
+{
+    MultiPrintCenter("\
+db    db  .d88b.  db    db      db   d8b   db  .d88b.  d8b   db \n\
+`8b  d8' .8P  Y8. 88    88      88   I8I   88 .8P  Y8. 888o  88 \n\
+ `8bd8'  88    88 88    88      88   I8I   88 88    88 88V8o 88 \n\
+   88    88    88 88    88      Y8   I8I   88 88    88 88 V8o88 \n\
+   88    `8b  d8' 88b  d88      `8b d8'8b d8' `8b  d8' 88  V888 \n\
+   YP     `Y88P'  ~Y8888P'       `8b8' `8d8'   `Y88P'  VP   V8P");
+
+}
+
+void gameLostWriting()
+{
+
+    MultiPrintCenter("\
+db    db  .d88b.  db    db      db       .d88b.  .d8888. d888888b \n\
+`8b  d8' .8P  Y8. 88    88      88      .8P  Y8. 88'  YP `~~88~~' \n\
+ `8bd8'  88    88 88    88      88      88    88 `8bo.      88    \n\
+   88    88    88 88    88      88      88    88   `Y8b.    88    \n\
+   88    `8b  d8' 88b  d88      88booo. `8b  d8' db   8D    88    \n\
+   YP     `Y88P'  ~Y8888P'      Y88888P  `Y88P'  `8888Y'    YP");
 
 }

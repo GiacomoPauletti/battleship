@@ -41,4 +41,7 @@ int MultiPrintCenter(char string[]);
 
 void filterNewLine(char string[]);
 
+void gameWinWriting();
+void gameLostWriting();
+
 #endif

@@ -2,7 +2,7 @@
 
 
 /* Converts packet to string */
-int packetToStr(DataPacket *packet, char buffer[sizeof(DataPacket)])
+int packetToStr(DataPacket *packet, char buffer[PACKET_STR_SIZE])
 {
     int counter;
     counter = sprintf(buffer, "%d|%d|%d|%d|%d|%s", 
@@ -15,10 +15,10 @@ int packetToStr(DataPacket *packet, char buffer[sizeof(DataPacket)])
 
 
 /* Converts string to packet */
-int strToPacket(DataPacket *packet, char buffer[])
+int strToPacket(DataPacket *packet, char buffer[PACKET_STR_SIZE])
 {
     int counter;
-    counter = sscanf(buffer, "%d|%d|%d|%d|%d|%s",
+    counter = sscanf(buffer, "%d|%d|%d|%d|%d|%[0-9a-zA-Z _,.|/]",
                 &(packet -> label), &(packet -> id), &(packet -> ans_id), &(packet -> last), 
                 &(packet -> order), packet -> content);
     //if ( counter != NUM_PACKET_FIELDS ) return -1;
@@ -55,7 +55,10 @@ int sendPacket(int fd, DataPacket *packet)
         #endif
         return -1;
     }
+
+    #if defined(DEBUG_PROTOCOL) || defined(DEBUG_ALL) || defined(DEBUG_PACKET)
     printf("[sendPacket] buffer is: %s\n", buffer);
+    #endif
     send(fd, buffer, PACKET_STR_SIZE, 0);
 
     return 1;
@@ -68,7 +71,11 @@ int recvPacket(int fd, DataPacket *packet)
 
     recv(fd, buffer, PACKET_STR_SIZE, 0);
     result = strToPacket(packet, buffer);
+
+    #if defined(DEBUG_PROTOCOL) || defined(DEBUG_ALL) || defined(DEBUG_PACKET)
     printf("[recvPacket] buffer is: %s\n", buffer);
+    #endif
+
     return result;
 }
 
@@ -264,7 +271,7 @@ int arePacketsSequential(PacketNode *packets)
  * If accept() failed, OTHER_FAIL is returned and errno is set to OTHER_FAIL
  * If protocol failed, PROTOCOL_FAIL is returned and errno is set to PROTOCOL_FAIL
  */
-int paccept(int server_socket, int client_socket, struct sockaddr *client_address)
+int paccept(int server_socket, int* client_socket, struct sockaddr *client_address)
 {
     int addr_len;
     int numAttempts;
@@ -272,6 +279,11 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
     DataPacket serverMsg, clientMsg;
     int currID, clientID;
 
+    if ( client_socket == NULL ) 
+    {
+        printf("Invalid client_socket variable.");
+        return OTHER_FAIL;
+    }
 
     if ( client_address == NULL ) return OTHER_FAIL;
     addr_len = sizeof(server_socket);
@@ -279,7 +291,7 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
     do 
     {
         errno = 0;
-        client_socket = accept(server_socket, client_address, 
+        *client_socket = accept(server_socket, client_address, 
                             (socklen_t *) &addr_len);
         #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         if ( errno != 0 || client_socket == -1 )
@@ -289,7 +301,7 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
         } 
         #endif
 
-    } while ( errno != 0 || client_socket == -1 );
+    } while ( errno != 0 || *client_socket == -1 );
     printf("Out of accept loop\n");
 
     /* checking if it is possible to communicate with client */
@@ -299,10 +311,10 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
         fillPacket(&serverMsg, ROCONN, currID, NO_ANS_ID, LAST, NO_ORDER, NO_CONTENT);
 
         printf("[Sending ROCONN] Sending...\n");
-        sendPacket(client_socket, &serverMsg);
+        sendPacket(*client_socket, &serverMsg);
         currID++;
         printf("[Waiting for ACK] ROCONN sent, waiting for ACK\n");
-        recvPacket(client_socket, &clientMsg);
+        recvPacket(*client_socket, &clientMsg);
 
         clientID = clientMsg.id;
 
@@ -323,11 +335,13 @@ int paccept(int server_socket, int client_socket, struct sockaddr *client_addres
         //#endif
         errno = PROTOCOL_FAIL;
         return PROTOCOL_FAIL;
-    }else printf("[Waiting for ACK] ACK found\n");
+    }
+
+    printf("[Waiting for ACK] ACK found\n");
 
     fillPacket(&serverMsg, ACK, currID, clientID, LAST, NO_ORDER, NO_CONTENT);
 
-    sendPacket(client_socket, &serverMsg);
+    sendPacket(*client_socket, &serverMsg);
     return 0;
 }
 
@@ -459,5 +473,3 @@ int main()
     return 0;
 }
 #endif
-
-

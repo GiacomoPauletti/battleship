@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "menu.h"
-
 #if !defined(__linux__)
 #include <conio.h>
 #endif
@@ -10,19 +9,18 @@ typedef struct {} GameSettings;
 
 typedef int (* GameHandler)(Player *player1, Player *player2);
 
-void turnHandler(Player *player1, Player *player2, GameHandler gameHandler1, GameHandler gameHandler2);
 
 void localMatchMenu(MenuData data);
-
 void LANMatchMenu(MenuData data);
 
 void playLocal(MenuData);
-
 int playHostLAN(MenuData data);
-
 int playGuestLAN(MenuData data);
 
+void turnHandler(Player *player1, Player *player2, GameHandler gameHandler1, GameHandler gameHandler2);
+
 int winHandler(Player *player1, Player *player2);
+int LANWinHandler(Player *player1, Player *player2);
 
 void filterNewLine(char string[]);
 
@@ -312,9 +310,7 @@ void playLocal(MenuData data)
     printf("|--------------------------------------------- BATTLESHIP MATCH ---------------------------------------------| \n");
     turnHandler(&player1, &player2, localGameHandler, localGameHandler);
 
-    if ( player1.winner == 1 ) winHandler(&player1, &player2);
-    else if (player2.winner == 1 ) winHandler(&player2, &player1);
-    else printf("Something went wrong.\nNobody won :(\n");
+    winHandler(&player1, &player2);
 
     printf("\n\n");
     printCenter("Press 'k' and enter to go back to menu");
@@ -336,6 +332,7 @@ int playHostLAN(MenuData data)
     int clientID;
     int numAttempts;
     int result;
+    int to_repeat;
 
     int server_socket, client_socket;
     int addr_len = sizeof(client_socket);
@@ -383,7 +380,7 @@ int playHostLAN(MenuData data)
     clientID = 1;
 
     printCenter("Waiting for player to join...\n");
-    result = paccept(server_socket, client_socket, (struct sockaddr *) &client_address);
+    result = paccept(server_socket, &client_socket, (struct sockaddr *) &client_address);
     printCenter("Player joined\n");
 
     /* ------------------------------ PLAYERS' NAMES INPUT ---------------------------- */
@@ -406,6 +403,7 @@ int playHostLAN(MenuData data)
     /* Getting client username */
     do
     {
+        to_repeat = 0;
         fillPacket(&serverMsg, ACTION, currID, -1, 1, -1, "input username");
 
         // asking for username
@@ -420,7 +418,7 @@ int playHostLAN(MenuData data)
         if ( clientMsg.label == ACTION_DONE && clientMsg.ans_id == (currID - 1) )
         {
             /* if its an "atomic" (one-packet message)... */
-            if ( clientMsg.order == -1 )
+            if ( clientMsg.last == LAST )
             {
                 strcpy(player2.name, clientMsg.content);
 
@@ -441,6 +439,7 @@ int playHostLAN(MenuData data)
             }
         } else
         {
+            to_repeat = 1;
             /* Missing answer to ACTION */
             fillPacket(&serverMsg, REPEAT, currID, clientMsg.ans_id, LAST, 
                         NO_ORDER, NO_CONTENT);
@@ -449,9 +448,7 @@ int playHostLAN(MenuData data)
             currID++;
 
         }
-    }while ( ( clientMsg.ans_id != (currID - 1) ) || ( player2.name[0] == '\n') ||
-            ( player2.name[0] == '\0' ) );
-
+    }while ( to_repeat == 1 || ( player2.name[0] == '\n') || ( player2.name[0] == '\0' ) );
 
     /* ----------------------------------- GAME SETUP --------------------------------- */
 
@@ -476,52 +473,99 @@ int playHostLAN(MenuData data)
 
     initDefaultArmy(&defaultArmy);
 
+    
     /* Now player1 place its ships */
+    #if defined(DEBUG_MENU) || defined(DEBUG_ALL) || defined(DEBUG_ONLINE)
+    FILE *pfile;
+    pfile = fopen("player_army.txt", "r");
+    fread(&(player1), sizeof(player1), 1, pfile);
+
+    printf("This is your army: \n");
+    printMap(player1.defenceMap);
+
+    (void) getch_();
+    #else
     printf("%s, it's time to place your ships!\n", player1.name);
     printf("When your are ready, press enter... ");
     fflush(stdin);
     (void) getch_();
 
-    playerArmySetup(&player1, defaultArmy);
+    playerArmySetup(&player1, defaultArmy); 
+    #endif
 
     numAttempts = 0;
     do
     {
+        to_repeat = 0;
         fillPacket(&serverMsg, ACTION, currID, -1, 1, -1, "input ship");
 
         sendPacket(client_socket, &serverMsg);
         currID++;
 
+        //player sent its defence map. Is it necessary?
+        //recvPacket(client_socket, &clientMsg);
+
         recvPacket(client_socket, &clientMsg);
-        // NECESSARIO AVERE UN SISTEMA DI PACCHETTI NON-ATOMIC
+        if ( clientMsg.label != ACTION_DONE )
+        {
+            to_repeat = 1;
+            fillPacket(&serverMsg, REPEAT, currID, clientMsg.ans_id, LAST, 
+                        NO_ORDER, NO_CONTENT);
+
+            sendPacket(client_socket, &serverMsg);
+        } 
+        else
+        {
+            fillPacket(&serverMsg, CORRECT, currID, clientMsg.ans_id, LAST, 
+                        NO_ORDER, NO_CONTENT);
+            sendPacket(client_socket, &serverMsg);
+        }
+    
+
+    } while ( to_repeat == 1 && numAttempts < MAX_SEND_ATTEMPTS );
+
+    gserver_socket = server_socket;
+    gclient_socket = client_socket;
+
+    printf("|--------------------------------------------- BATTLESHIP MATCH ---------------------------------------------| \n");
+    turnHandler(&player1, &player2, hostGameHandler, guestGameHandler);
 
 
-    } while ( clientMsg.ans_id != (currID - 1) && numAttempts < MAX_SEND_ATTEMPTS );
+    LANWinHandler(&player1, &player2);
+
+    printf("\n\n\n\n\n\n\n");
+    printCenter("Press 'k' and enter to go back to menu");
+    while (getch_() != 'k');
 
     close(server_socket);
-
     return 0;
 }
 
 int playGuestLAN(MenuData data)
 {
-    Player localPlayer, oppPlayer;
+    Player localPlayer;
 
     Army defaultArmy;
     GameSettings curSettings;
 
     DataPacket serverMsg, localMsg;
-    int contentBuf[MAX_PACKETS * CHUNK_SIZE];
+    int contentBuf[CHUNK_SIZE];
+
+    Coordinate cursor;
 
     int currID;
     int serverID;
     int numAttempts;
     int to_repeat;
 
+    int cursorX, cursorY;
+
     int local_socket;
     int addr_len = sizeof(local_socket);
     struct sockaddr_in server_address, client_address;
     int result;
+
+    int gameEnded;
 
     local_socket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -572,7 +616,7 @@ int playGuestLAN(MenuData data)
         to_repeat = 0;
         recvPacket(local_socket, &serverMsg);
         serverID = serverMsg.id;
-        if ( serverMsg.label != ACTION || strcmp(serverMsg.content, "input username") != 0)
+        if ( serverMsg.label != ACTION )
             to_repeat = 1;
         else
         {
@@ -591,6 +635,79 @@ int playGuestLAN(MenuData data)
     } while(to_repeat == 1);
     
     printf("Username approved\n");
+
+    /* ----------------------------------- GAME SETUP --------------------------------- */
+
+    clearScreen();
+    printf("Great, not let's setup the game...\n\n");
+
+    /* setting map dimensions */
+    localPlayer.attackMap.dims.x = localPlayer.defenceMap.dims.x = MAP_WIDTH;
+    localPlayer.attackMap.dims.y = localPlayer.defenceMap.dims.y = MAP_WIDTH;
+
+    empty(&(localPlayer.attackMap));
+    empty(&(localPlayer.defenceMap));
+
+    localPlayer.winner = 0;
+
+    localPlayer.shipNumber = DEFAULT_SHIP_NUM;
+
+
+    initDefaultArmy(&defaultArmy);
+
+    /* Now localPlayer place its ships */
+    #if defined(DEBUG_MENU) || defined(DEBUG_ALL) || defined(DEBUG_ONLINE)
+    FILE *pfile;
+    pfile = fopen("player_army.txt", "r");
+    fread(&(localPlayer), sizeof(localPlayer), 1, pfile);
+    fread(&(localPlayer), sizeof(localPlayer), 1, pfile);
+
+    printf("This is your army: \n");
+    printMap(localPlayer.defenceMap);
+
+    (void) getch_();
+    #else
+    printf("%s, it's time to place your ships!\n", localPlayer.name);
+    printf("When your are ready, press enter... ");
+    fflush(stdin);
+    (void) getch_();
+
+    
+    playerArmySetup(&localPlayer, defaultArmy);
+    #endif
+
+    do
+    {
+        to_repeat = 0;
+        recvPacket(local_socket, &serverMsg);
+        if ( serverMsg.label != ACTION )
+        {
+            to_repeat = 1;
+        }
+        else
+        {
+            
+            fillPacket(&localMsg, ACTION_DONE, currID, -1, 1, -1, NO_CONTENT);
+            sendPacket(local_socket, &localMsg);
+            currID++;
+
+
+            recvPacket(local_socket, &serverMsg);
+            if ( serverMsg.label != CORRECT )
+                to_repeat = 1;
+        }
+
+    } while ( to_repeat == 1 && numAttempts < MAX_SEND_ATTEMPTS );
+
+    glocal_socket = local_socket;
+
+    localGuestGameHandler(&localPlayer, NULL);
+
+    printf("\n\n\n\n\n\n\n");
+    printCenter("Press 'k' and enter to go back to menu");
+    while (getch_() != 'k');
+
+    close(local_socket);
     return 0;
 }
 
@@ -605,8 +722,6 @@ void turnHandler(Player *player1, Player *player2, GameHandler gameHandler1, Gam
     curPlayer = player1; 
     while ( numSunkP1 < player1 -> shipNumber && numSunkP2 < player2 -> shipNumber )
     {
-        printf("%s, it's your turn: \n", curPlayer -> name);
-        printf("Ship sunk till now %d\n", numSunkP1);
          
         if ( curPlayer == player1 )
         {
@@ -645,8 +760,36 @@ int winHandler(Player *player1, Player *player2)
     char string[100 + MAX_NAME_LENGTH];
 
     clearScreen();
-    sprintf(string, "Congratulation %s you won this match!!\n", player1 -> name);
+    if ( player1 -> winner == 1 )
+        sprintf(string, "Congratulation %s you won this match!!\n", player1 -> name);
+    else
+        sprintf(string, "Congratulation %s you won this match!!\n", player2 -> name);
     printCenter(string);
 
-    return 1;
+    return 0;
+}
+
+int LANWinHandler(Player *player1, Player *player2)
+{
+    DataPacket serverMsg;
+    int currID;
+    currID = 0;
+
+    clearScreen();
+    printf("\n\n");
+
+    if ( player1 -> winner == 1)
+    {
+        gameWinWriting();
+        fillPacket(&serverMsg, EOC, currID, NO_ANS_ID, LAST, NO_ORDER, "host win");
+    }
+    else
+    {
+        gameLostWriting();
+        fillPacket(&serverMsg, EOC, currID, NO_ANS_ID, LAST, NO_ORDER, "guest win");
+    }
+    sendPacket(gclient_socket, &serverMsg);
+    currID++;
+
+    return 0;
 }
