@@ -437,6 +437,8 @@ int guestGameHandler(Player *onlinePlayer, Player *localPlayer)
                 {
                     strcpy(attackResult, "water _");
                 
+                    addToMap(&(localPlayer -> defenceMap), cursor, WATER_CHAR);
+                    addToMap(&(onlinePlayer -> attackMap), cursor, WATER_CHAR);
                     printCenter("Enemy hitted water\n");
                 }
                 else if ( result == 1 )
@@ -444,6 +446,7 @@ int guestGameHandler(Player *onlinePlayer, Player *localPlayer)
                     strcpy(attackResult, "hitted not_sunk");
 
                     addToMap(&(onlinePlayer -> attackMap), cursor, HIT_SHIP_CHAR);
+                    addToMap(&(localPlayer -> defenceMap), cursor, HIT_SHIP_CHAR);
 
                     sprintf(buffer, "Enemy hitted your ship at (%d,%d)\n", cursor.x, cursor.y);
                     printCenter(buffer);
@@ -453,6 +456,7 @@ int guestGameHandler(Player *onlinePlayer, Player *localPlayer)
                     strcpy(attackResult, "hitted sunk");
 
                     addToMap(&(onlinePlayer -> attackMap), cursor, HIT_SHIP_CHAR);
+                    addToMap(&(localPlayer -> defenceMap), cursor, HIT_SHIP_CHAR);
 
                     sprintf(buffer, "Enemy hitted and sunk your ship at (%d,%d)\n", cursor.x, cursor.y);
                     printCenter(buffer);
@@ -564,6 +568,7 @@ int localGuestGameHandler(Player *localPlayer, Player *oppPlayer)
         {
             fillPacket(&localMsg, ACTION_DONE, currID, serverMsg.id, LAST, 
             NO_ORDER, "water _");
+            addToMap(&(localPlayer -> defenceMap), cursor, WATER_CHAR);
 
             printCenter("Enemy hitted WATER\n");
         }
@@ -667,6 +672,7 @@ int localGuestGameHandler(Player *localPlayer, Player *oppPlayer)
         } 
         else // water hitted
         {
+            addToMap(&(localPlayer -> attackMap), cursor, WATER_CHAR);
             printCenter("YOU HITTED WATER\n");
         }
         printf("\n\n\n");
