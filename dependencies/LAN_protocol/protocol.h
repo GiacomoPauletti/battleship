@@ -14,6 +14,7 @@
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #endif
 #include <unistd.h>
 
@@ -118,6 +119,9 @@ typedef struct packetNode
  * errno is set to PROTOCOL_FAIL and/or the function returns PROTOCOL_FAIL */
 #define PROTOCOL_FAIL -1
 
+
+#define BUF_SIZE 256 
+#define IP_SIZE 15
 /* fills the packet fileds with parameters */
 int fillPacket(DataPacket *packet, int label, int id, int ans_id, int last, int order, char content[CHUNK_SIZE]);
 
@@ -169,4 +173,10 @@ int paccept(int server_socket, int *client_socket, struct sockaddr *client_addre
  */
 int pconnect(int local_socket, struct sockaddr *server_address);
 
+/* Finds IP address of active wifi adapter of machine.
+
+ * RETURN VALUE:
+ * Returns the ip address as a string 
+ */
+char* findIP();
 #endif

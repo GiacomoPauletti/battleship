@@ -12,8 +12,6 @@
 #if !defined(MENU_H)
 #define MENU_H
 
-#define BUF_SIZE 128
-
 
 typedef struct {} MenuData;
 

@@ -327,6 +327,7 @@ int playHostLAN(MenuData data)
 
     DataPacket serverMsg, clientMsg;
     int contentBuf[MAX_PACKETS * CHUNK_SIZE];
+    char buffer[BUF_SIZE];
 
     int currID;
     int clientID;
@@ -380,6 +381,10 @@ int playHostLAN(MenuData data)
     clientID = 1;
 
     printCenter("Waiting for player to join...\n");
+    printf("\n\n");
+    sprintf(buffer, "Your ip address is %s\n", findIP());
+    printCenter(buffer);
+    printf("\n\n");
     result = paccept(server_socket, &client_socket, (struct sockaddr *) &client_address);
     printCenter("Player joined\n");
 
@@ -567,6 +572,8 @@ int playGuestLAN(MenuData data)
 
     int gameEnded;
 
+    char ipBuffer[IP_SIZE + 1];
+
     local_socket = socket(AF_INET, SOCK_STREAM, 0);
 
     client_address.sin_family = AF_INET;
@@ -575,9 +582,18 @@ int playGuestLAN(MenuData data)
 
     bind(local_socket, (struct sockaddr *) &client_address, sizeof(client_address));
 
+    printCenter("Press enter to continue: \n");
+    scanf("%*c");
+    clearScreen();
+
+    printf("\n\n");
+    printCenter("Insert host's IP address: ");
+    printf("\t\t\t\t\t\t\t");
+    fgets(ipBuffer, IP_SIZE + 1, stdin); 
+
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(SERVER_PORT);
-    server_address.sin_addr.s_addr = INADDR_ANY;
+    server_address.sin_addr.s_addr = inet_addr(ipBuffer);
 
     errno = 0;
 

@@ -310,10 +310,14 @@ int paccept(int server_socket, int* client_socket, struct sockaddr *client_addre
     {
         fillPacket(&serverMsg, ROCONN, currID, NO_ANS_ID, LAST, NO_ORDER, NO_CONTENT);
 
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Sending ROCONN] Sending...\n");
+        #endif
         sendPacket(*client_socket, &serverMsg);
         currID++;
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Waiting for ACK] ROCONN sent, waiting for ACK\n");
+        #endif
         recvPacket(*client_socket, &clientMsg);
 
         clientID = clientMsg.id;
@@ -331,13 +335,17 @@ int paccept(int server_socket, int* client_socket, struct sockaddr *client_addre
     if ( numAttempts >= MAX_SEND_ATTEMPTS )
     {
         //#if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Waiting for ACK] No acknowledge received from client!");
+        #endif
         //#endif
         errno = PROTOCOL_FAIL;
         return PROTOCOL_FAIL;
     }
 
+    #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
     printf("[Waiting for ACK] ACK found\n");
+    #endif
 
     fillPacket(&serverMsg, ACK, currID, clientID, LAST, NO_ORDER, NO_CONTENT);
 
@@ -372,29 +380,41 @@ int pconnect(int local_socket, struct sockaddr *server_address)
 
         errno = OTHER_FAIL;
         return OTHER_FAIL;
-    } else printf("Connected!\n");
+    } 
+    #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+    else printf("Connected!\n");
+    #endif
 
     /* doing protocol procedures ... */
     /* 1) server sends a Request for Connection (ROCONN) */
     numAttempts = 0;
     do
     {
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Waiting for ROCONN] Waiting...!\n");
+        #endif
+
         recvPacket(local_socket, &serverMsg);
         numAttempts++;
+
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Waiting for ROCONN] Packet received!\n");
+        #endif
     } while ( ( serverMsg.label != ROCONN ) && ( numAttempts < MAX_SEND_ATTEMPTS ));
 
     // if no request was found, connection fails
     if ( numAttempts >= MAX_SEND_ATTEMPTS )
     {
-        //#if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Wating for ROCONN] No request received from server\n");
-        //#endif
+        #endif
 
         errno = PROTOCOL_FAIL;
         return PROTOCOL_FAIL;
-    } else printf("[Waiting for ROCONN] Right packet found\n");
+    } 
+    #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+    else printf("[Waiting for ROCONN] Right packet found\n");
+    #endif
 
     /* 2) client sends an Acknoledgement (ACK) */
     serverID = serverMsg.id;
@@ -408,68 +428,167 @@ int pconnect(int local_socket, struct sockaddr *server_address)
     {
         recvPacket(local_socket, &serverMsg);
         numAttempts++;
+        
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Waiting for ACK] Packet received\n");
+        #endif
     } while ( ( serverMsg.label != ACK ) && numAttempts < MAX_SEND_ATTEMPTS );
 
     // if no acknowledgement was found, connection fails 
     if ( numAttempts >= MAX_SEND_ATTEMPTS )
     {
-        //#if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+        #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
         printf("[Waiting for ACK] No acknowledgement received from server\n");
-        //#endif
+        #endif
 
         errno = PROTOCOL_FAIL;
         return PROTOCOL_FAIL;
-    } else printf("[Waiting for ACK] Right packet found\n");
+    } 
+    #if defined(DEBUG_ALL) || defined(DEBUG_PROTOCOL)
+    else printf("[Waiting for ACK] Right packet found\n");
+    #endif
 
     return 0;
 }
 
-
-
-#if 0 //defined(DEBUG)
-void printList(PacketNode *head)
+char* findIPWindows()
 {
-        while ( head != NULL)
-        {
-                printf("%d ", head -> order);
-                head = head -> next;
-        }
-        printf("\n");
+
+	FILE *buf;
+	char lineBuffer[BUF_SIZE];
+	char *ipBuffer;
+	int counter, counter2;
+	int offset;
+
+	int sectionFound;
+
+	ipBuffer = malloc(sizeof(IP_SIZE) * sizeof(char) + sizeof(char));
+	// 15 + 1 chars
+
+    buf = fopen("buffer.txt", "w");
+    fclose(buf);
+
+	system("ipconfig > buffer.txt");
+
+	buf = fopen("buffer.txt", "r+");
+
+	sectionFound = 0;
+	while ( feof(buf) == 0 )
+	{
+
+		counter = 0;
+		while ( (lineBuffer[counter] = fgetc(buf)) != '\n')
+			counter++;
+
+		lineBuffer[counter] = '\0';
+
+		if ( strstr(lineBuffer, "Wireless LAN adapter WiFi:") != NULL || 
+			strstr(lineBuffer, "Scheda LAN wireless Wi-Fi") != NULL )
+		{
+			sectionFound = 1;
+		} 
+		if ( sectionFound == 1 )
+		{
+			if ( strstr(lineBuffer, "IPv4 Address") != NULL || 
+				strstr(lineBuffer, "Indirizzo IPv4") != NULL)
+			{
+				for ( counter2 = 10; counter2 < counter && lineBuffer[counter2] != ':'; counter2++);
+
+				counter2 = counter2 + 2;
+				if ( counter2 < counter ) 
+				{
+					for ( offset = 0; counter2 + offset < counter && lineBuffer[counter2 + offset] != '\0'; offset++)
+					{
+						ipBuffer[offset] = lineBuffer[counter2 + offset];
+					}
+					ipBuffer[offset] = '\0';
+				}
+				else printf("Nothing found\n");
+
+
+				return ipBuffer;
+			}
+		}
+					
+
+	}
+
+	fclose(buf);
+
+	return "\0";
 }
 
-PacketNode* inputList()
+char* findIPLinux()
 {
-        PacketNode* head;
-        int input;
 
-        scanf("%d", &input);
-        if (input == -1) return NULL;
+	FILE *buf;
+	char lineBuffer[BUF_SIZE];
+	char *ipBuffer;
+	int counter, counter2;
+	int offset;
 
-        head = malloc(sizeof(PacketNode));
-        head -> order = input;
-        head -> next = inputList();
+	int sectionFound;
 
-        return head;
+	ipBuffer = malloc(sizeof(IP_SIZE) * sizeof(char) + sizeof(char));
 
+    buf = fopen("buffer.txt", "w");
+    fclose(buf);
+
+	system("ip address > buffer.txt");
+
+	buf = fopen("buffer.txt", "r+");
+
+	sectionFound = 0;
+	while ( feof(buf) == 0 )
+	{
+
+		counter = 0;
+		while ( (lineBuffer[counter] = fgetc(buf)) != '\n')
+			counter++;
+
+		lineBuffer[counter] = '\0';
+
+		if ( strstr(lineBuffer, "wifi") != NULL &&
+			strstr(lineBuffer, "UP") != NULL )
+		{
+			sectionFound = 1;
+		} 
+		if ( sectionFound == 1 )
+		{
+			if ( strstr(lineBuffer, "inet") != NULL &&
+				strstr(lineBuffer, "inet6") == NULL)
+			{
+				for ( counter2 = 0; counter2 < counter && lineBuffer[counter2] != 't'; counter2++);
+
+				counter2 = counter2 + 2;
+				if ( counter2 < counter ) 
+				{
+					for ( offset = 0; counter2 + offset < counter && lineBuffer[counter2 + offset] != '/'; offset++)
+					{
+						ipBuffer[offset] = lineBuffer[counter2 + offset];
+					}
+					ipBuffer[offset] = '\0';
+
+				}
+				else printf("Nothing found\n");
+
+				return ipBuffer;
+			}
+		}
+					
+
+	}
+
+	fclose(buf);
+
+	return "\0";
 }
 
-
-int main()
+char *findIP()
 {
-    PacketNode *packets; 
-
-    printf("Inserisci gli ordini dei pacchetti, separandoli tra loro con 1 spazio\n");
-    packets = inputList();
-
-    printList(packets);
-    printf("\n");
-
-    sortPackets(&packets);
-
-    printf("Is list sorted? %d\n", arePacketsSorted(packets, 1));
-    printf("Is list sequential? %d\n", arePacketsSequential(packets));
-
-    return 0;
+    #if defined(_WIN32)
+    return findIPWindows();
+    #elif defined(__linux__)
+    return findIPLinux();
+    #endif
 }
-#endif
